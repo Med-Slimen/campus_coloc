@@ -73,6 +73,11 @@ export class EspaceComponent implements OnInit, OnDestroy {
   dialogFermerOuvert: boolean = false;
   // États du dialogue pour confirmer la colocation par un colocataire
   dialogConfirmerColocOuvert: boolean = false;
+  // États du dialogue de remplacement requis en colocation confirmée
+  dialogRemplacementOuvert: boolean = false;
+  emailRemplacant: string = '';
+  remplacementEnCours: boolean = false;
+
   actionEnCours: boolean = false;
 
   // Accès à Math pour les templates
@@ -93,9 +98,24 @@ export class EspaceComponent implements OnInit, OnDestroy {
     return this.espace?.statut === 'confirme';
   }
 
+  // Indique si le propriétaire a confirmé la location
+  get bailleurAConfirme(): boolean {
+    return this.espace?.confirmationProprietaire === true;
+  }
+
   // Nombre de membres acceptés ayant déjà confirmé
   get nbMembresConfirmes(): number {
     return this.membresAcceptes.filter(m => m.membre.confirme).length;
+  }
+
+  // Nombre total de parties devant confirmer (membres acceptés + bailleur)
+  get totalPartiesAConfirmer(): number {
+    return this.membresAcceptes.length + 1;
+  }
+
+  // Nombre total de parties ayant déjà confirmé
+  get totalPartiesConfirmees(): number {
+    return this.nbMembresConfirmes + (this.bailleurAConfirme ? 1 : 0);
   }
 
   // Membre courant de l'utilisateur connecté
@@ -107,6 +127,16 @@ export class EspaceComponent implements OnInit, OnDestroy {
   // Détermine si l'utilisateur connecté a déjà confirmé son engagement
   get jAiConfirme(): boolean {
     return this.monMembre?.membre.confirme === true;
+  }
+
+  // Indique si le membre connecté a une demande de remplacement en cours
+  get aDemandeDepart(): boolean {
+    return this.monMembre?.membre.demandeDepart === true;
+  }
+
+  // Candidatures de remplacement en attente de décision du premier locataire
+  get candidaturesRemplacement(): MembreDetailItem[] {
+    return this.membresDetails.filter(m => m.membre.statutAdhesion === 'remplacement');
   }
 
   // Détermine si l'utilisateur actuel est le propriétaire du logement
@@ -366,13 +396,64 @@ export class EspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 6. Quitter la colocation (auto-fermeture si premier seul, ou transmission au plus ancien)
+  // 6. Quitter la colocation (départ direct avant confirmation OU proposition de remplaçant si confirmée)
   demanderQuitter(): void {
-    this.dialogQuitterOuvert = true;
+    if (this.estConfirme) {
+      this.emailRemplacant = '';
+      this.dialogRemplacementOuvert = true;
+    } else {
+      this.dialogQuitterOuvert = true;
+    }
   }
 
   annulerQuitter(): void {
     this.dialogQuitterOuvert = false;
+  }
+
+  fermerDialogRemplacement(): void {
+    this.dialogRemplacementOuvert = false;
+    this.emailRemplacant = '';
+  }
+
+  async confirmerProposerRemplacant(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+    const email = this.emailRemplacant.trim();
+    if (!email) {
+      this.toastService.avertissement("Veuillez renseigner l'adresse email du remplaçant.");
+      return;
+    }
+
+    this.remplacementEnCours = true;
+    try {
+      await this.espaceService.proposerRemplacant(this.annonceId, user.uid, email);
+      this.toastService.succes("Invitation transmise à votre remplaçant ! En attente de validation par le premier locataire.");
+      this.fermerDialogRemplacement();
+      await this.rafraichirMembres();
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Impossible de désigner ce remplaçant.");
+    } finally {
+      this.remplacementEnCours = false;
+    }
+  }
+
+  async repondreRemplacement(item: MembreDetailItem, decision: 'accepte' | 'refuse'): Promise<void> {
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.validerRemplacement(this.annonceId, item.membre.etudiantId, decision);
+      this.toastService.succes(
+        decision === 'accepte'
+          ? "Remplacement validé avec succès ! Le colocataire sortant a été automatiquement libéré de la colocation."
+          : "Candidature de remplacement refusée."
+      );
+      await this.rafraichirMembres();
+      const esp = await this.espaceService.getEspace(this.annonceId);
+      if (esp) this.espace = esp;
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors du traitement du remplacement.");
+    } finally {
+      this.actionEnCours = false;
+    }
   }
 
   async confirmerQuitter(): Promise<void> {
@@ -443,16 +524,48 @@ export class EspaceComponent implements OnInit, OnDestroy {
           this.espace.dateFinLocation = res.dateFinLocation;
         }
         this.toastService.succes(
-          "Félicitations ! Tous les colocataires ont confirmé. La colocation est officiellement validée !"
+          "Félicitations ! L'ensemble des colocataires et le propriétaire ont confirmé. La colocation est officiellement validée !"
         );
       } else {
-        this.toastService.succes("Votre confirmation d'engagement a bien été enregistrée.");
+        this.toastService.succes("Votre confirmation d'engagement a bien été enregistrée. En attente des autres parties.");
       }
 
       await this.rafraichirMembres();
       this.dialogConfirmerColocOuvert = false;
     } catch (err: any) {
       this.toastService.erreur(err?.message || "Impossible de confirmer votre engagement.");
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // 9. Confirmation de la colocation par le propriétaire bailleur
+  async validerConfirmationBailleur(): Promise<void> {
+    if (!this.estProprietaire) return;
+
+    this.actionEnCours = true;
+    try {
+      const res = await this.espaceService.confirmBailleur(this.annonceId);
+      if (res.espaceConfirme) {
+        if (this.espace) {
+          this.espace.statut = 'confirme';
+          this.espace.confirmationProprietaire = true;
+          this.espace.dateConfirmation = new Date().toISOString();
+          this.espace.dateFinLocation = res.dateFinLocation;
+        }
+        this.toastService.succes(
+          "Félicitations ! Vous avez confirmé la colocation et tous les colocataires ont validé. Le bail est scellé !"
+        );
+      } else {
+        if (this.espace) {
+          this.espace.confirmationProprietaire = true;
+        }
+        this.toastService.succes("Votre confirmation en tant que bailleur a bien été prise en compte.");
+      }
+
+      await this.rafraichirMembres();
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Impossible de confirmer la colocation.");
     } finally {
       this.actionEnCours = false;
     }

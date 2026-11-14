@@ -1,6 +1,6 @@
 export type VisibiliteEspace = 'prive' | 'public';
 export type StatutEspace = 'ouvert' | 'complet' | 'confirme' | 'ferme';
-export type StatutAdhesion = 'invite' | 'demande' | 'accepte' | 'refuse';
+export type StatutAdhesion = 'invite' | 'demande' | 'accepte' | 'refuse' | 'remplacement';
 
 // Modèle espace Firestore : collection espaces/{annonceId}
 export interface Espace {
@@ -12,7 +12,9 @@ export interface Espace {
   statut: StatutEspace;
   reglesMaison: string[];
   dateOuverture: string; // ISO string
-  dateConfirmation?: string; // ISO string quand tous les membres ont confirmé
+  confirmationProprietaire?: boolean; // Confirmation formelle du bailleur
+  dateConfirmationProprietaire?: string; // ISO string
+  dateConfirmation?: string; // ISO string quand tous les membres et le bailleur ont confirmé
   dateFinLocation?: string; // ISO string date de fin calculée selon la durée
   dureeLocation?: string;
   motifFermeture?: string;
@@ -26,6 +28,9 @@ export interface Membre {
   dateAdhesion: string; // ISO string
   confirme?: boolean; // Confirmation individuelle de la colocation
   dateConfirmation?: string; // ISO string
+  remplaceEtudiantId?: string; // ID de l'étudiant qu'il remplace dans la colocation confirmée
+  demandeDepart?: boolean; // Vrai si le membre a initié un départ avec remplaçant
+  remplacantId?: string; // ID de l'étudiant proposé en remplacement
 }
 
 // Alias pour compatibilité

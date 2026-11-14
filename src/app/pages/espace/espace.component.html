@@ -26,29 +26,30 @@
   <!-- ========================================================================= -->
   <div *ngIf="!chargement && !erreur && estInviteEnAttente" class="banniere-invitation-etudiant card">
     <div class="contenu-banniere-invit">
-      <app-icon name="users" [size]="24"></app-icon>
+      <app-icon name="users" [size]="28"></app-icon>
       <div>
         <strong>Vous êtes invité à rejoindre cette colocation !</strong>
-        <p>Le premier locataire vous propose d'intégrer ce logement partagé.</p>
+        <p>Le premier locataire vous propose d'intégrer le logement « {{ annonce?.titre }} ».</p>
+        <small class="note-invit-securite">Vous devez accepter l'invitation pour accéder à l'espace partagé et au salon de discussion.</small>
       </div>
     </div>
     <div class="actions-banniere-invit">
       <button
         type="button"
-        class="btn btn-primary btn-sm"
-        (click)="repondreMembre(membresDetails[0], 'accepte')"
+        class="btn btn-primary"
+        (click)="repondreMembre(monMembre || membresDetails[0], 'accepte')"
         [disabled]="actionEnCours"
       >
-        <app-icon name="check" [size]="14"></app-icon>
-        <span>Accepter l'invitation</span>
+        <app-icon name="check" [size]="16"></app-icon>
+        <span>Accepter et rejoindre</span>
       </button>
       <button
         type="button"
-        class="btn btn-secondary btn-sm"
-        (click)="repondreMembre(membresDetails[0], 'refuse')"
+        class="btn btn-secondary"
+        (click)="repondreMembre(monMembre || membresDetails[0], 'refuse')"
         [disabled]="actionEnCours"
       >
-        <app-icon name="close" [size]="14"></app-icon>
+        <app-icon name="close" [size]="16"></app-icon>
         <span>Refuser</span>
       </button>
     </div>
@@ -56,8 +57,9 @@
 
   <!-- ========================================================================= -->
   <!-- CONTENU DE L'ESPACE : DEUX COLONNES (Gauche: détails, Droite: chat)      -->
+  <!-- Accessible UNIQUEMENT si membre accepté, propriétaire ou admin            -->
   <!-- ========================================================================= -->
-  <div *ngIf="!chargement && !erreur && !accesRefuse && espace && annonce" class="contenu-espace-actif">
+  <div *ngIf="!chargement && !erreur && !accesRefuse && !estInviteEnAttente && espace && annonce" class="contenu-espace-actif">
     <!-- En-tête de l'espace -->
     <header class="en-tete-espace">
       <div>
@@ -156,23 +158,42 @@
           <!-- Cas B : En attente de la confirmation de chacun -->
           <div *ngIf="espace.statut !== 'confirme'" class="bloc-en-cours-confirmation">
             <p class="desc-confirmation">
-              Pour valider définitivement la location, chaque colocataire accepté doit confirmer son engagement. Dès que tous les membres auront cliqué sur « Confirmer », la colocation sera confirmée et le logement réservé.
+              Pour valider définitivement la location, chaque colocataire accepté ainsi que le propriétaire bailleur doivent confirmer leur engagement. Dès que toutes les parties auront validé, la colocation sera scellée et le logement réservé.
             </p>
 
             <div class="progression-confirmations">
               <div class="barre-progression-conteneur">
                 <div
                   class="barre-progression-valeur"
-                  [style.width.%]="(nbMembresConfirmes / Math.max(1, membresAcceptes.length)) * 100"
+                  [style.width.%]="(totalPartiesConfirmees / Math.max(1, totalPartiesAConfirmer)) * 100"
                 ></div>
               </div>
               <span class="chiffre-progression">
-                <strong>{{ nbMembresConfirmes }}</strong> / {{ membresAcceptes.length }} colocataire{{ membresAcceptes.length > 1 ? 's ont' : ' a' }} confirmé
+                <strong>{{ totalPartiesConfirmees }}</strong> / {{ totalPartiesAConfirmer }} partie{{ totalPartiesAConfirmer > 1 ? 's ont' : ' a' }} confirmé
               </span>
             </div>
 
-            <!-- Liste des colocataires et de leur état de confirmation -->
+            <!-- Liste des colocataires et du bailleur et de leur état de confirmation -->
             <div class="liste-etats-confirmation">
+              <!-- Bailleur -->
+              <div class="ligne-etat-confirmation ligne-bailleur">
+                <div class="membre-info-court">
+                  <app-avatar [nom]="proprietaire?.nom || 'Propriétaire'" [taille]="28" role="proprietaire"></app-avatar>
+                  <span class="nom-court-coloc">
+                    {{ proprietaire?.nom || 'Bailleur' }}
+                    <small class="tag-role-court">(Propriétaire)</small>
+                  </span>
+                </div>
+                <span
+                  class="badge badge-sm"
+                  [ngClass]="bailleurAConfirme ? 'badge-ok' : 'badge-neutral'"
+                >
+                  <app-icon [name]="bailleurAConfirme ? 'check' : 'pause'" [size]="12"></app-icon>
+                  <span>{{ bailleurAConfirme ? 'Confirmé' : 'En attente' }}</span>
+                </span>
+              </div>
+
+              <!-- Colocataires -->
               <div *ngFor="let m of membresAcceptes" class="ligne-etat-confirmation">
                 <div class="membre-info-court">
                   <app-avatar [nom]="m.user?.nom || 'Membre'" [taille]="28" role="etudiant"></app-avatar>
@@ -203,7 +224,25 @@
 
             <div *ngIf="estMembreAccepte && !estProprietaire && jAiConfirme" class="confirmation-deja-faite">
               <app-icon name="check" [size]="16"></app-icon>
-              <span>Vous avez confirmé votre engagement. En attente des autres colocataires.</span>
+              <span>Vous avez confirmé votre engagement. En attente des autres parties.</span>
+            </div>
+
+            <!-- Bouton pour le propriétaire bailleur s'il n'a pas encore confirmé -->
+            <div *ngIf="estProprietaire && !bailleurAConfirme && espace.statut !== 'ferme'" class="action-confirmer-membre">
+              <button
+                type="button"
+                class="btn btn-primary w-full btn-action-confirmer"
+                (click)="validerConfirmationBailleur()"
+                [disabled]="actionEnCours"
+              >
+                <app-icon name="check" [size]="16"></app-icon>
+                <span>Confirmer la location (Bailleur)</span>
+              </button>
+            </div>
+
+            <div *ngIf="estProprietaire && bailleurAConfirme" class="confirmation-deja-faite">
+              <app-icon name="check" [size]="16"></app-icon>
+              <span>Vous avez validé cette colocation en tant que propriétaire bailleur.</span>
             </div>
           </div>
         </div>
@@ -412,19 +451,64 @@
                 </button>
               </div>
             </div>
+          <!-- Candidatures de remplacement de colocataire (Premier locataire) -->
+          <div *ngIf="candidaturesRemplacement.length > 0" class="bloc-candidatures-en-attente bloc-remplacements-section">
+            <span class="tag-label">CANDIDATURES DE REMPLACEMENT (DÉPART DE COLOCATAIRE)</span>
+            <p class="desc-remplacements-info">
+              Un colocataire a proposé un remplaçant pour quitter la colocation confirmée. En l'acceptant, le nouveau colocataire intégrera l'espace et le colocataire sortant sera automatiquement libéré.
+            </p>
+            <div *ngFor="let item of candidaturesRemplacement" class="candidat-item candidat-remplacement-item">
+              <div class="candidat-nom-type">
+                <strong>{{ item.user?.nom || 'Étudiant' }}</strong>
+                <small class="remplace-label">
+                  Remplacement proposé ({{ item.user?.email }})
+                </small>
+              </div>
+              <div class="candidat-actions">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="repondreRemplacement(item, 'accepte')"
+                  [disabled]="actionEnCours"
+                >
+                  Valider le remplacement
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="repondreRemplacement(item, 'refuse')"
+                  [disabled]="actionEnCours"
+                >
+                  Refuser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Encart pour le colocataire ayant fait une demande de remplacement -->
+        <div *ngIf="aDemandeDepart" class="card encart-demande-depart">
+          <div class="icone-remplacement-encart">
+            <app-icon name="alert" [size]="20"></app-icon>
+          </div>
+          <div class="texte-remplacement-encart">
+            <strong>Demande de remplacement en cours</strong>
+            <p>
+              Votre proposition de remplaçant a été transmise au premier locataire. Dès qu'elle sera validée, vous serez automatiquement libéré(e) de cette colocation.
+            </p>
           </div>
         </div>
 
         <!-- 6. Bouton Quitter la colocation (pour les colocataires membres) -->
-        <div *ngIf="estMembreAccepte && !estProprietaire" class="zone-quitter-coloc">
+        <div *ngIf="estMembreAccepte && !estProprietaire && !aDemandeDepart" class="zone-quitter-coloc">
           <button
             type="button"
             class="btn btn-danger btn-sm w-full"
             (click)="demanderQuitter()"
             [disabled]="actionEnCours"
           >
-            <app-icon name="log-out" [size]="14"></app-icon>
-            <span>Quitter cette colocation</span>
+            <app-icon [name]="estConfirme ? 'users' : 'log-out'" [size]="14"></app-icon>
+            <span>{{ estConfirme ? 'Proposer un remplaçant pour quitter' : 'Quitter cette colocation' }}</span>
           </button>
         </div>
 
@@ -520,10 +604,63 @@
   <app-confirm-dialog
     [ouvert]="dialogConfirmerColocOuvert"
     titre="Confirmer mon engagement"
-    message="En confirmant, vous validez formellement votre participation à cette colocation pour la durée convenue. Une fois que tous les colocataires auront confirmé, la colocation sera scellée."
+    message="En confirmant, vous validez formellement votre participation à cette colocation pour la durée convenue. Une fois que tous les colocataires et le bailleur auront confirmé, la colocation sera scellée."
     texteConfirmer="Confirmer mon engagement"
     texteAnnuler="Annuler"
     (confirmer)="validerConfirmationColocation()"
     (annuler)="annulerConfirmerColocation()"
   ></app-confirm-dialog>
+
+  <!-- 4. Dialogue pour proposer un remplaçant (quand la colocation est confirmée) -->
+  <div *ngIf="dialogRemplacementOuvert" class="modal-remplacement-overlay">
+    <div class="modal-remplacement-card card">
+      <div class="modal-remplacement-header">
+        <div class="modal-titre-avec-icone">
+          <app-icon name="users" [size]="20"></app-icon>
+          <h3>Proposer un remplaçant pour quitter</h3>
+        </div>
+        <button type="button" class="btn-fermer-modal" (click)="fermerDialogRemplacement()">✕</button>
+      </div>
+
+      <div class="modal-remplacement-body">
+        <p class="modal-info-remplacement">
+          La colocation étant confirmée et le bail scellé, votre engagement financier reste actif jusqu'à ce qu'un remplaçant prenne votre suite.
+        </p>
+        <p class="modal-info-sub">
+          Indiquez l'adresse email de l'étudiant certifié qui vous remplacera. Dès que le premier locataire validera sa candidature, vous serez <strong>automatiquement libéré(e)</strong> de la colocation.
+        </p>
+
+        <div class="champ-form-modal">
+          <label for="inputEmailRemplacantModal" class="label-champ">Email de l'étudiant remplaçant (certifié) :</label>
+          <input
+            id="inputEmailRemplacantModal"
+            type="email"
+            class="input-invit w-full"
+            placeholder="etudiant@universite.tn"
+            [(ngModel)]="emailRemplacant"
+          />
+        </div>
+      </div>
+
+      <div class="modal-remplacement-footer">
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="fermerDialogRemplacement()"
+          [disabled]="remplacementEnCours"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="confirmerProposerRemplacant()"
+          [disabled]="remplacementEnCours || !emailRemplacant.trim()"
+        >
+          <app-icon name="check" [size]="14"></app-icon>
+          <span>{{ remplacementEnCours ? 'Transmission en cours...' : 'Envoyer la proposition' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

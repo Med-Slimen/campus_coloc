@@ -408,7 +408,7 @@ export class EspaceService {
     }
   }
 
-  // 12. Confirmation individuelle d'un membre colocataire
+  // 12. Confirmation individuelle d'un membre colocataire (requiert tous les colocataires ET le bailleur)
   async confirmMembre(
     annonceId: string,
     etudiantId: string
@@ -431,13 +431,14 @@ export class EspaceService {
       dateConfirmation: maintenant
     });
 
-    // 2. Vérifier si TOUS les membres acceptés ont désormais confirmé
+    // 2. Vérifier si TOUS les membres acceptés ET le bailleur ont confirmé
     const membresAcceptes = membres.filter(m => m.statutAdhesion === 'accepte');
-    const tousConfirmes = membresAcceptes.every(m =>
+    const tousColocsConfirmes = membresAcceptes.every(m =>
       m.etudiantId === etudiantId ? true : m.confirme === true
     );
+    const bailleurConfirme = espace.confirmationProprietaire === true;
 
-    if (tousConfirmes && membresAcceptes.length > 0) {
+    if (tousColocsConfirmes && bailleurConfirme && membresAcceptes.length > 0) {
       const annonce = annonceSnap.exists() ? (annonceSnap.data() as Annonce) : null;
       const duree = espace.dureeLocation || annonce?.dureeLocation || '1 semestre';
       const dateFin = this.calculerDateFin(duree);
@@ -465,7 +466,7 @@ export class EspaceService {
         await this.notificationService.create({
           userId: m.etudiantId,
           type: 'adhesion_acceptee',
-          contenu: `Excellente nouvelle ! Tous les colocataires ont validé leur engagement pour « ${titre} ». La colocation est officiellement confirmée !`,
+          contenu: `Excellente nouvelle ! L'ensemble des colocataires et le propriétaire ont validé leur engagement pour « ${titre} ». La colocation est officiellement confirmée !`,
           lien: `/espace/${annonceId}`,
           lue: false,
           dateEnvoi: maintenant,
@@ -477,7 +478,7 @@ export class EspaceService {
         await this.notificationService.create({
           userId: espace.proprietaireId,
           type: 'demande',
-          contenu: `Tous les colocataires ont confirmé leur colocation pour votre bien « ${titre} ». Le bail est désormais confirmé !`,
+          contenu: `Tous les colocataires et vous-même avez confirmé la colocation pour votre bien « ${titre} ». Le bail est désormais scellé !`,
           lien: `/espace/${annonceId}`,
           lue: false,
           dateEnvoi: maintenant,
@@ -489,6 +490,298 @@ export class EspaceService {
     }
 
     return { espaceConfirme: false };
+  }
+
+  // 12. bis : Confirmation de la colocation par le propriétaire bailleur
+  async confirmBailleur(
+    annonceId: string
+  ): Promise<{ espaceConfirme: boolean; dateFinLocation?: string }> {
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace de colocation introuvable.");
+    if (espace.statut === 'ferme') throw new Error("Cet espace de colocation est fermé.");
+
+    const maintenant = new Date().toISOString();
+    const espaceRef = doc(db, 'espaces', annonceId);
+
+    // Mettre à jour la confirmation du bailleur
+    await updateDoc(espaceRef, {
+      confirmationProprietaire: true,
+      dateConfirmationProprietaire: maintenant
+    });
+
+    // Vérifier si tous les colocataires acceptés ont aussi confirmé
+    const membresAcceptes = membres.filter(m => m.statutAdhesion === 'accepte');
+    const tousColocsConfirmes = membresAcceptes.length > 0 && membresAcceptes.every(m => m.confirme === true);
+
+    if (tousColocsConfirmes) {
+      const annonce = annonceSnap.exists() ? (annonceSnap.data() as Annonce) : null;
+      const duree = espace.dureeLocation || annonce?.dureeLocation || '1 semestre';
+      const dateFin = this.calculerDateFin(duree);
+
+      const batch = writeBatch(db);
+      batch.update(espaceRef, {
+        statut: 'confirme',
+        dateConfirmation: maintenant,
+        dateFinLocation: dateFin,
+        dureeLocation: duree
+      });
+
+      if (annonceSnap.exists()) {
+        const annonceRef = doc(db, 'annonces', annonceId);
+        batch.update(annonceRef, { statut: 'louee' });
+      }
+
+      await batch.commit();
+
+      // Notifications
+      const titre = annonce?.titre || 'le logement';
+      for (const m of membresAcceptes) {
+        await this.notificationService.create({
+          userId: m.etudiantId,
+          type: 'adhesion_acceptee',
+          contenu: `Le propriétaire a validé la location pour « ${titre} » et tous les colocataires ont confirmé. La colocation est officiellement confirmée !`,
+          lien: `/espace/${annonceId}`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+      }
+
+      await this.notificationService.create({
+        userId: espace.proprietaireId,
+        type: 'demande',
+        contenu: `Vous avez confirmé la colocation pour « ${titre} » et tous les colocataires sont validés. La colocation est officiellement confirmée !`,
+        lien: `/espace/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      return { espaceConfirme: true, dateFinLocation: dateFin };
+    }
+
+    return { espaceConfirme: false };
+  }
+
+  // 13. Proposer un remplaçant certifié pour pouvoir quitter une colocation confirmée
+  async proposerRemplacant(annonceId: string, demandeurId: string, emailRemplacant: string): Promise<void> {
+    const emailNettoye = emailRemplacant.trim();
+    if (!emailNettoye) throw new Error("Veuillez saisir une adresse email.");
+
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace de colocation introuvable.");
+    if (espace.statut !== 'confirme') {
+      throw new Error("Le remplacement n'est requis que lorsque la colocation est officiellement confirmée.");
+    }
+
+    // Recherche de l'étudiant remplaçant
+    const usersCol = collection(db, 'users');
+    let userSnap = await getDocs(query(usersCol, where('email', '==', emailNettoye)));
+    if (userSnap.empty) {
+      userSnap = await getDocs(query(usersCol, where('email', '==', emailNettoye.toLowerCase())));
+    }
+
+    if (userSnap.empty) {
+      throw new Error(`Aucun utilisateur trouvé avec l'adresse « ${emailNettoye} » sur CampusColoc.`);
+    }
+
+    const remplacantDoc = userSnap.docs[0];
+    const remplacant = remplacantDoc.data() as User;
+    const remplacantId = remplacantDoc.id;
+
+    if (remplacant.role !== 'etudiant') {
+      throw new Error("L'adresse renseignée ne correspond pas à un compte étudiant.");
+    }
+    if (remplacant.statutVerification !== 'verifie') {
+      throw new Error("Cet étudiant n'a pas encore validé son profil universitaire (profil non vérifié).");
+    }
+    if (remplacantId === demandeurId) {
+      throw new Error("Vous ne pouvez pas vous désigner vous-même comme remplaçant.");
+    }
+
+    // Vérifier si le remplaçant est déjà membre accepté
+    const membreExistant = membres.find(m => m.etudiantId === remplacantId);
+    if (membreExistant && membreExistant.statutAdhesion === 'accepte') {
+      throw new Error("Cet étudiant fait déjà partie des colocataires acceptés.");
+    }
+
+    const maintenant = new Date().toISOString();
+    const batch = writeBatch(db);
+
+    // 1. Marquer la demande de départ sur le membre demandeur
+    const demandeurRef = doc(db, 'espaces', annonceId, 'membres', demandeurId);
+    batch.update(demandeurRef, {
+      demandeDepart: true,
+      remplacantId: remplacantId
+    });
+
+    // 2. Créer l'invitation de remplacement
+    const remplacantRef = doc(db, 'espaces', annonceId, 'membres', remplacantId);
+    const nouveauMembreRemplacant: Membre = {
+      etudiantId: remplacantId,
+      premierLocataire: false,
+      statutAdhesion: 'remplacement',
+      remplaceEtudiantId: demandeurId,
+      dateAdhesion: maintenant
+    };
+    batch.set(remplacantRef, nouveauMembreRemplacant);
+
+    await batch.commit();
+
+    // 3. Notifications
+    const annonce = annonceSnap.exists() ? (annonceSnap.data() as Annonce) : null;
+    const titre = annonce?.titre || 'la colocation';
+
+    // Notifier le remplaçant
+    await this.notificationService.create({
+      userId: remplacantId,
+      type: 'invitation_espace',
+      contenu: `Vous avez été proposé comme remplaçant pour intégrer la colocation « ${titre} ». En attente de validation par le premier locataire.`,
+      lien: `/espace/${annonceId}`,
+      lue: false,
+      dateEnvoi: maintenant,
+      annonceId
+    });
+
+    // Notifier le premier locataire
+    await this.notificationService.create({
+      userId: espace.premierLocataireId,
+      type: 'demande_espace',
+      contenu: `Un colocataire souhaite quitter « ${titre} » et propose ${remplacant.nom || 'un remplaçant'} pour reprendre sa place. Veuillez statuer sur ce remplacement.`,
+      lien: `/espace/${annonceId}`,
+      lue: false,
+      dateEnvoi: maintenant,
+      annonceId
+    });
+  }
+
+  // 14. Validation ou refus du remplaçant par le premier locataire (départ automatique du demandeur si accepté)
+  async validerRemplacement(
+    annonceId: string,
+    remplacantId: string,
+    action: 'accepte' | 'refuse'
+  ): Promise<void> {
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace introuvable.");
+
+    const membreRemplacant = membres.find(m => m.etudiantId === remplacantId);
+    if (!membreRemplacant) throw new Error("Candidature de remplacement introuvable.");
+
+    const demandeurId = membreRemplacant.remplaceEtudiantId;
+    if (!demandeurId) throw new Error("Impossible d'identifier le colocataire remplacé.");
+
+    const maintenant = new Date().toISOString();
+    const titre = annonceSnap.exists() ? (annonceSnap.data() as Annonce).titre : 'le logement';
+    const batch = writeBatch(db);
+
+    if (action === 'accepte') {
+      // Le remplaçant devient membre accepté et confirmé
+      const remplacantRef = doc(db, 'espaces', annonceId, 'membres', remplacantId);
+      batch.update(remplacantRef, {
+        statutAdhesion: 'accepte',
+        confirme: true,
+        dateConfirmation: maintenant
+      });
+
+      // Le colocataire demandeur quitte automatiquement la colocation
+      const demandeurRef = doc(db, 'espaces', annonceId, 'membres', demandeurId);
+      batch.update(demandeurRef, {
+        statutAdhesion: 'refuse',
+        demandeDepart: false,
+        premierLocataire: false
+      });
+
+      // Si le demandeur sortant était le premier locataire : désigner un successeur
+      if (espace.premierLocataireId === demandeurId) {
+        const autres = membres.filter(m => m.statutAdhesion === 'accepte' && m.etudiantId !== demandeurId);
+        const nouveauPremierId = autres.length > 0 ? autres[0].etudiantId : remplacantId;
+
+        const newPremierRef = doc(db, 'espaces', annonceId, 'membres', nouveauPremierId);
+        batch.update(newPremierRef, { premierLocataire: true });
+
+        const espaceRef = doc(db, 'espaces', annonceId);
+        batch.update(espaceRef, { premierLocataireId: nouveauPremierId });
+      }
+
+      await batch.commit();
+
+      // Notifications
+      await this.notificationService.create({
+        userId: demandeurId,
+        type: 'adhesion_acceptee',
+        contenu: `Votre remplaçant a été validé par le premier locataire. Votre départ de la colocation « ${titre} » est désormais effectif.`,
+        lien: `/annonces/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      await this.notificationService.create({
+        userId: remplacantId,
+        type: 'adhesion_acceptee',
+        contenu: `Félicitations ! Votre intégration en remplacement dans « ${titre} » a été validée par le premier locataire. Bienvenue dans la colocation !`,
+        lien: `/espace/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      if (espace.proprietaireId) {
+        await this.notificationService.create({
+          userId: espace.proprietaireId,
+          type: 'demande',
+          contenu: `Un remplacement de colocataire a été validé avec succès pour votre logement « ${titre} ».`,
+          lien: `/espace/${annonceId}`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+      }
+    } else {
+      // Refus du remplaçant
+      const remplacantRef = doc(db, 'espaces', annonceId, 'membres', remplacantId);
+      batch.update(remplacantRef, { statutAdhesion: 'refuse' });
+
+      const demandeurRef = doc(db, 'espaces', annonceId, 'membres', demandeurId);
+      batch.update(demandeurRef, { demandeDepart: false, remplacantId: null });
+
+      await batch.commit();
+
+      await this.notificationService.create({
+        userId: demandeurId,
+        type: 'adhesion_refusee',
+        contenu: `Le premier locataire n'a pas retenu le remplaçant proposé pour « ${titre} ». Veuillez proposer un autre remplaçant pour finaliser votre départ.`,
+        lien: `/espace/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      await this.notificationService.create({
+        userId: remplacantId,
+        type: 'adhesion_refusee',
+        contenu: `Votre candidature de remplacement pour la colocation « ${titre} » n'a pas été retenue.`,
+        lien: `/annonces/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+    }
   }
 
   // 13. Quitter la colocation avec gestion du premier locataire

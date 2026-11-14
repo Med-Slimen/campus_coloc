@@ -169,7 +169,10 @@ service cloud.firestore {
     // - Consultation réservée au propriétaire du logement et aux membres acceptés.
     // - Espace public ouvert : consultation autorisée pour lister les logements avec colocation active.
     match /espaces/{annonceId} {
-      allow read: if true;
+      allow read: if isAcceptedMembre(annonceId) ||
+        (resource.data.visibilite == 'public' && resource.data.statut == 'ouvert') ||
+        (isSignedIn() && resource.data.proprietaireId == request.auth.uid) ||
+        isAdmin();
 
       // Création lors de l'acceptation de la première demande par le propriétaire ou l'administrateur
       allow create: if isSignedIn() && (request.resource.data.proprietaireId == request.auth.uid || isAdmin());
@@ -184,19 +187,20 @@ service cloud.firestore {
         // Chaque membre peut lire son statut ; les membres acceptés et le bailleur lisent la liste des colocataires
         allow read: if isSignedIn() && (request.auth.uid == etudiantId || isAcceptedMembre(annonceId));
 
-        // Inscription ou premier membre créé par le propriétaire, invitation par le 1er locataire, ou demande d'adhésion par un étudiant vérifié
+        // Inscription ou premier membre créé par le propriétaire, invitation par un colocataire ou le 1er locataire, ou demande d'adhésion
         allow create: if isSignedIn() && (
           isEspaceOwner(annonceId) ||
-          (isPremierLocataire(annonceId) && request.resource.data.statutAdhesion == 'invite') ||
-          (isVerifiedStudent() && request.auth.uid == etudiantId && request.resource.data.statutAdhesion == 'demande') ||
+          isAcceptedMembre(annonceId) ||
+          (isVerifiedStudent() && request.auth.uid == etudiantId && request.resource.data.statutAdhesion in ['demande', 'remplacement']) ||
           isAdmin()
         );
 
-        // Décision du premier locataire, confirmation individuelle par le colocataire ou réponse de l'invité
+        // Décision du premier locataire, confirmation individuelle par le colocataire, départ ou remplacement
         allow update: if isSignedIn() && (
           request.auth.uid == etudiantId ||
           isPremierLocataire(annonceId) ||
           isEspaceOwner(annonceId) ||
+          isAcceptedMembre(annonceId) ||
           isAdmin()
         );
 
