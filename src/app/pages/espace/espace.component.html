@@ -421,10 +421,42 @@
                   <span class="tag-premier-locataire" *ngIf="m.membre.premierLocataire">
                     Premier locataire
                   </span>
+                  <!-- Tag 'Départ demandé' -->
+                  <span class="badge badge-warning badge-sm" *ngIf="m.membre.demandeDepart && m.membre.statutDepart === 'en_attente'">
+                    Départ demandé
+                  </span>
+                  <!-- Tag 'Recherche remplaçant' -->
+                  <span class="badge badge-info badge-sm" *ngIf="m.membre.demandeDepart && m.membre.statutDepart === 'accepte'">
+                    Recherche remplaçant
+                  </span>
                 </div>
                 <div class="coordonnees-membre">
                   <small>{{ m.user?.email }}</small>
                   <small *ngIf="m.user?.telephone">• {{ m.user?.telephone }}</small>
+                </div>
+
+                <!-- Action directe sur la ligne du colocataire demandeur (Premier locataire ou Bailleur) -->
+                <div *ngIf="(estPremierLocataire || estProprietaire) && m.membre.demandeDepart && m.membre.statutDepart === 'en_attente'" class="actions-depart-ligne">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm btn-accepter-depart-ligne"
+                    (click)="repondreDemandeDepart(m, 'accepte')"
+                    [disabled]="actionEnCours"
+                    title="Accepter la demande de départ et l'autoriser à inviter un remplaçant"
+                  >
+                    <app-icon name="check" [size]="13"></app-icon>
+                    <span>Accepter le départ</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm btn-refuser-depart-ligne"
+                    (click)="repondreDemandeDepart(m, 'refuse')"
+                    [disabled]="actionEnCours"
+                    title="Refuser la demande de départ"
+                  >
+                    <app-icon name="close" [size]="13"></app-icon>
+                    <span>Refuser</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -584,38 +616,61 @@
                 </button>
               </div>
             </div>
-          <!-- Demandes de départ de colocataires (Premier locataire uniquement) -->
-          <div *ngIf="demandesDepartEnAttente.length > 0" class="bloc-candidatures-en-attente bloc-demandes-depart-section">
-            <span class="tag-label">DEMANDES DE DÉPART DE COLOCATAIRES</span>
-            <p class="desc-demandes-depart-info">
-              Les colocataires suivants ont formulé une demande pour quitter la colocation confirmée. En acceptant leur demande, vous les autorisez à inviter un remplaçant.
-            </p>
+          </div>
+        </div>
+
+        <!-- Demandes de départ de colocataires (Premier locataire ou Propriétaire bailleur) -->
+        <div *ngIf="(estPremierLocataire || estProprietaire) && demandesDepartEnAttente.length > 0" class="card carte-demandes-depart-urgente">
+          <div class="entete-bloc-depart-urgent">
+            <div class="titre-icone-alerte-depart">
+              <app-icon name="alert" [size]="20"></app-icon>
+              <span class="tag-label">DEMANDE DE DÉPART À TRAITER</span>
+            </div>
+            <span class="badge badge-warning">{{ demandesDepartEnAttente.length }} en attente</span>
+          </div>
+
+          <p class="desc-demandes-depart-info">
+            Dans cette colocation confirmée, un colocataire souhaite quitter le logement. En acceptant sa demande, vous l'autorisez à inviter un remplaçant certifié. Dès que le remplaçant aura validé, le colocataire sortant sera automatiquement libéré.
+          </p>
+
+          <div class="liste-demandes-depart">
             <div *ngFor="let item of demandesDepartEnAttente" class="candidat-item demande-depart-item">
+              <app-avatar
+                [nom]="item.user?.nom || 'Colocataire'"
+                [photoUrl]="item.user?.photo"
+                [taille]="42"
+                role="etudiant"
+              ></app-avatar>
               <div class="candidat-nom-type">
                 <strong>{{ item.user?.nom || 'Colocataire' }}</strong>
-                <small *ngIf="item.membre.motifDepart" class="motif-depart-texte">
-                  Motif : « {{ item.membre.motifDepart }} »
-                </small>
-                <small *ngIf="!item.membre.motifDepart" class="motif-depart-texte">
-                  Aucun motif particulier spécifié
-                </small>
+                <small class="email-demandeur">{{ item.user?.email }}</small>
+                <div *ngIf="item.membre.motifDepart" class="motif-depart-cadre">
+                  <span class="motif-label">Motif déclaré :</span>
+                  <span class="motif-texte">« {{ item.membre.motifDepart }} »</span>
+                </div>
+                <div *ngIf="!item.membre.motifDepart" class="motif-depart-cadre motif-vide">
+                  <small>Aucun motif particulier spécifié.</small>
+                </div>
               </div>
+
               <div class="candidat-actions">
                 <button
                   type="button"
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-primary btn-sm btn-action-accepter-depart"
                   (click)="repondreDemandeDepart(item, 'accepte')"
                   [disabled]="actionEnCours"
                 >
-                  Accepter le départ
+                  <app-icon name="check" [size]="14"></app-icon>
+                  <span>Accepter le départ</span>
                 </button>
                 <button
                   type="button"
-                  class="btn btn-danger btn-sm"
+                  class="btn btn-danger btn-sm btn-action-refuser-depart"
                   (click)="repondreDemandeDepart(item, 'refuse')"
                   [disabled]="actionEnCours"
                 >
-                  Refuser
+                  <app-icon name="close" [size]="14"></app-icon>
+                  <span>Refuser</span>
                 </button>
               </div>
             </div>

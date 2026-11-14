@@ -656,6 +656,19 @@ export class EspaceService {
         dateEnvoi: maintenant,
         annonceId
       });
+
+      // Notifier également le propriétaire bailleur
+      if (espace.proprietaireId) {
+        await this.notificationService.create({
+          userId: espace.proprietaireId,
+          type: 'demande',
+          contenu: `${demandeurNom} a formulé une demande pour quitter la colocation confirmée « ${titre} ».`,
+          lien: `/espace/${annonceId}`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+      }
     }
   }
 
@@ -684,7 +697,7 @@ export class EspaceService {
       await this.notificationService.create({
         userId: etudiantId,
         type: 'adhesion_acceptee',
-        contenu: `Le premier locataire a accepté votre demande de départ de « ${titre} ». Vous pouvez maintenant inviter un remplaçant certifié.`,
+        contenu: `Votre demande de départ pour « ${titre} » a été acceptée ! Vous pouvez maintenant inviter un remplaçant certifié pour prendre votre place.`,
         lien: `/espace/${annonceId}`,
         lue: false,
         dateEnvoi: maintenant,
@@ -700,7 +713,7 @@ export class EspaceService {
       await this.notificationService.create({
         userId: etudiantId,
         type: 'adhesion_refusee',
-        contenu: `Le premier locataire a refusé votre demande de départ pour la colocation « ${titre} ».`,
+        contenu: `Votre demande de départ pour la colocation « ${titre} » a été refusée.`,
         lien: `/espace/${annonceId}`,
         lue: false,
         dateEnvoi: maintenant,
