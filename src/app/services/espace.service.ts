@@ -1029,12 +1029,18 @@ export class EspaceService {
 
   // Récupère la liste des identifiants d'annonces dont l'espace est public et ouvert
   async getEspacesPublicsOuvertsIds(): Promise<string[]> {
-    const colRef = collection(db, 'espaces');
-    const snap = await getDocs(colRef);
-    return snap.docs
-      .map(d => ({ ...(d.data() as Espace), annonceId: d.id }))
-      .filter(e => e.visibilite === 'public' && e.statut === 'ouvert')
-      .map(e => e.annonceId);
+    try {
+      const colRef = collection(db, 'espaces');
+      const q = query(
+        colRef,
+        where('visibilite', '==', 'public'),
+        where('statut', '==', 'ouvert')
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.id);
+    } catch {
+      return [];
+    }
   }
 
   // Récupère les espaces de colocation actifs (non fermés) appartenant à un propriétaire

@@ -22,27 +22,49 @@
       <ng-container *ngIf="roleActif !== 'visiteur'">
         <!-- Navigation Étudiant -->
         <ng-container *ngIf="roleActif === 'etudiant'">
-          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
-          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
-          <a routerLink="/etudiant" routerLinkActive="lien-actif">Mon espace</a>
-          <a routerLink="/favoris" routerLinkActive="lien-actif">Mes favoris</a>
-          <a routerLink="/demandes" routerLinkActive="lien-actif">Mes demandes</a>
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenus()">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif" (click)="fermerMenus()">Annonces</a>
+          <a routerLink="/etudiant" routerLinkActive="lien-actif" (click)="fermerMenus()">Mon espace</a>
+          <a
+            *ngIf="espaceActifId"
+            [routerLink]="['/espace', espaceActifId]"
+            routerLinkActive="lien-actif"
+            class="badge-nav-espace"
+            (click)="fermerMenus()"
+            title="Accéder à votre colocation en cours"
+          >
+            <app-icon name="users" [size]="14"></app-icon>
+            <span>Espace Coloc</span>
+          </a>
+          <a routerLink="/favoris" routerLinkActive="lien-actif" (click)="fermerMenus()">Mes favoris</a>
+          <a routerLink="/demandes" routerLinkActive="lien-actif" (click)="fermerMenus()">Mes demandes</a>
         </ng-container>
 
         <!-- Navigation Propriétaire -->
         <ng-container *ngIf="roleActif === 'proprietaire'">
-          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
-          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
-          <a routerLink="/proprietaire" routerLinkActive="lien-actif">Mon espace</a>
-          <a routerLink="/mes-annonces" routerLinkActive="lien-actif">Mes annonces</a>
-          <a routerLink="/demandes" routerLinkActive="lien-actif">Demandes reçues</a>
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenus()">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif" (click)="fermerMenus()">Annonces</a>
+          <a routerLink="/proprietaire" routerLinkActive="lien-actif" (click)="fermerMenus()">Mon espace</a>
+          <a
+            *ngIf="espaceActifId"
+            [routerLink]="['/espace', espaceActifId]"
+            routerLinkActive="lien-actif"
+            class="badge-nav-espace"
+            (click)="fermerMenus()"
+            title="Accéder à l'espace de colocation actif de votre logement"
+          >
+            <app-icon name="users" [size]="14"></app-icon>
+            <span>Espace Coloc</span>
+          </a>
+          <a routerLink="/mes-annonces" routerLinkActive="lien-actif" (click)="fermerMenus()">Mes annonces</a>
+          <a routerLink="/demandes" routerLinkActive="lien-actif" (click)="fermerMenus()">Demandes reçues</a>
         </ng-container>
 
         <!-- Navigation Admin -->
         <ng-container *ngIf="roleActif === 'admin'">
-          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
-          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
-          <a routerLink="/admin/tableau-de-bord" class="btn btn-primary btn-sm">
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }" (click)="fermerMenus()">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif" (click)="fermerMenus()">Annonces</a>
+          <a routerLink="/admin/tableau-de-bord" class="btn btn-primary btn-sm" (click)="fermerMenus()">
             <app-icon name="dashboard" [size]="15"></app-icon>
             <span>Tableau de bord</span>
           </a>
@@ -216,6 +238,10 @@
         <a routerLink="/" (click)="fermerMenus()">Accueil</a>
         <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
         <a routerLink="/etudiant" (click)="fermerMenus()">Mon espace</a>
+        <a *ngIf="espaceActifId" [routerLink]="['/espace', espaceActifId]" class="lien-mobile-coloc-actif" (click)="fermerMenus()">
+          <app-icon name="users" [size]="16"></app-icon>
+          <span>Espace de colocation</span>
+        </a>
         <a routerLink="/favoris" (click)="fermerMenus()">Mes favoris</a>
         <a routerLink="/demandes" (click)="fermerMenus()">Mes demandes</a>
         <a routerLink="/notifications" class="lien-mobile-notifs" (click)="fermerMenus()">
@@ -238,6 +264,10 @@
         <a routerLink="/" (click)="fermerMenus()">Accueil</a>
         <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
         <a routerLink="/proprietaire" (click)="fermerMenus()">Mon espace</a>
+        <a *ngIf="espaceActifId" [routerLink]="['/espace', espaceActifId]" class="lien-mobile-coloc-actif" (click)="fermerMenus()">
+          <app-icon name="users" [size]="16"></app-icon>
+          <span>Espace de colocation</span>
+        </a>
         <a routerLink="/mes-annonces" (click)="fermerMenus()">Mes annonces</a>
         <a routerLink="/demandes" (click)="fermerMenus()">Demandes reçues</a>
         <a routerLink="/notifications" class="lien-mobile-notifs" (click)="fermerMenus()">

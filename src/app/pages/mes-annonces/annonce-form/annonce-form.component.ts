@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
@@ -17,13 +17,16 @@ import { Annonce, VILLES_TUNISIE } from '../../../models';
   templateUrl: './annonce-form.component.html',
   styleUrls: ['./annonce-form.component.css']
 })
-export class AnnonceFormComponent implements OnInit {
+export class AnnonceFormComponent implements OnInit, OnDestroy {
   private annonceService = inject(AnnonceService);
   private imageService = inject(ImageService);
   public authService = inject(AuthService);
   private toastService = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  // Accès à Math pour les templates
+  readonly Math = Math;
 
   // Liste immuable des gouvernorats de Tunisie
   readonly villes = VILLES_TUNISIE;
@@ -56,6 +59,13 @@ export class AnnonceFormComponent implements OnInit {
   chargement: boolean = false;
   chargementPhoto: boolean = false;
   erreur: string | null = null;
+
+  // États de l'écran de confirmation après création réussie
+  soumissionReussie: boolean = false;
+  nouvelleAnnonceCreeeId: string | null = null;
+  recapAnnonce: any = null;
+  decompteSecondes: number = 8;
+  private timerDecompte?: any;
 
   // Vérifie si le propriétaire connecté a un profil certifié
   get estVerifie(): boolean {
@@ -195,9 +205,10 @@ export class AnnonceFormComponent implements OnInit {
         this.toastService.succes(
           "Annonce mise à jour avec succès. Elle a été renvoyée en modération."
         );
+        this.router.navigate(['/mes-annonces']);
       } else {
         // En mode création : nouveau document avec statut initial en_attente
-        await this.annonceService.create({
+        const nouveauLogementId = await this.annonceService.create({
           proprietaireId: user.uid,
           titre: this.titre.trim(),
           description: this.description.trim(),
@@ -213,12 +224,31 @@ export class AnnonceFormComponent implements OnInit {
           dateCreation: new Date().toISOString()
         });
 
+        // Stockage du récapitulatif pour affichage sur la page de confirmation
+        this.recapAnnonce = {
+          id: nouveauLogementId,
+          titre: this.titre.trim(),
+          description: this.description.trim(),
+          ville: this.ville,
+          quartier: this.quartier.trim(),
+          loyer: Number(this.loyer),
+          charges: Number(this.charges) || 0,
+          nombrePlaces: Number(this.nombrePlaces) || 1,
+          meuble: this.meuble,
+          dureeLocation: this.dureeLocation,
+          photos: [...this.photos]
+        };
+
+        this.nouvelleAnnonceCreeeId = nouveauLogementId;
+        this.soumissionReussie = true;
+
         this.toastService.succes(
           "Votre annonce a été transmise avec succès ! Elle est en cours d'examen par notre équipe."
         );
-      }
 
-      this.router.navigate(['/mes-annonces']);
+        // Lancement du compte à rebours pour ramener le propriétaire vers son dashboard
+        this.demarrerDecompte();
+      }
     } catch (err: any) {
       const msg = err?.message || "Erreur lors de l'enregistrement de l'annonce.";
       this.erreur = msg;
@@ -226,5 +256,60 @@ export class AnnonceFormComponent implements OnInit {
     } finally {
       this.chargement = false;
     }
+  }
+
+  // Démarre le décompte de redirection vers le dashboard propriétaire
+  demarrerDecompte(): void {
+    this.arreterDecompte();
+    this.decompteSecondes = 8;
+    this.timerDecompte = setInterval(() => {
+      this.decompteSecondes--;
+      if (this.decompteSecondes <= 0) {
+        this.retourDashboard();
+      }
+    }, 1000);
+  }
+
+  // Arrête le timer en cours
+  arreterDecompte(): void {
+    if (this.timerDecompte) {
+      clearInterval(this.timerDecompte);
+      this.timerDecompte = undefined;
+    }
+  }
+
+  // Redirige vers le tableau de bord propriétaire
+  retourDashboard(): void {
+    this.arreterDecompte();
+    this.router.navigate(['/proprietaire']);
+  }
+
+  // Redirige vers la liste de toutes ses annonces
+  allerMesAnnonces(): void {
+    this.arreterDecompte();
+    this.router.navigate(['/mes-annonces']);
+  }
+
+  // Réinitialise le formulaire pour déposer un autre logement
+  creerNouvelleAnnonce(): void {
+    this.arreterDecompte();
+    this.soumissionReussie = false;
+    this.nouvelleAnnonceCreeeId = null;
+    this.recapAnnonce = null;
+    this.titre = '';
+    this.description = '';
+    this.ville = '';
+    this.quartier = '';
+    this.loyer = null;
+    this.charges = 0;
+    this.nombrePlaces = 2;
+    this.meuble = true;
+    this.dureeLocation = '1 année universitaire';
+    this.photos = [];
+    this.erreur = null;
+  }
+
+  ngOnDestroy(): void {
+    this.arreterDecompte();
   }
 }

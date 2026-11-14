@@ -1,228 +1,345 @@
 <div class="container page-form-annonce">
-  <div class="en-tete-nav">
-    <a routerLink="/mes-annonces" class="lien-retour">
-      <app-icon name="arrow-left" [size]="16"></app-icon>
-      <span>Retour à mes annonces</span>
-    </a>
-  </div>
+  <!-- 1. ÉCRAN DE CONFIRMATION APRÈS DÉPÔT RÉUSSI D'UNE NOUVELLE ANNONCE -->
+  <div *ngIf="soumissionReussie && recapAnnonce" class="carte-confirmation card">
+    <div class="confirmation-icone-cercle">
+      <app-icon name="check" [size]="44"></app-icon>
+    </div>
 
-  <div class="en-tete-form">
-    <span class="tag-label">{{ modeEdition ? 'MODIFICATION' : 'NOUVELLE OFFRE' }}</span>
-    <h1 class="titre-form">{{ modeEdition ? 'Modifier votre annonce' : 'Déposer une nouvelle annonce' }}</h1>
-    <p class="desc-form">
-      {{ modeEdition 
-        ? 'Toute modification sur une annonce déjà traitée la renverra automatiquement en modération.' 
-        : 'Remplissez les détails de votre logement pour trouver des colocataires fiables et vérifiés.' }}
+    <div class="confirmation-badge-attente">
+      <app-icon name="clock" [size]="14"></app-icon>
+      <span>En attente de modération administrative</span>
+    </div>
+
+    <h1 class="confirmation-titre">Annonce soumise avec succès !</h1>
+    <p class="confirmation-sous-titre">
+      Votre offre de colocation a été enregistrée avec succès. Elle a été transmise à l'équipe de validation CampusColoc.
+      Dès vérification de votre logement sous 24h ouvrées, votre annonce sera visible publiquement par tous les étudiants certifiés.
     </p>
-  </div>
 
-  <!-- Avertissement si le propriétaire n'est pas vérifié -->
-  <div *ngIf="!estVerifie" class="alerte-non-verifie">
-    <app-icon name="alert" [size]="20"></app-icon>
-    <div class="alerte-contenu">
-      <strong>Vérification d'identité requise</strong>
-      <p>Votre profil n'a pas encore été certifié par notre équipe. Vous devez transmettre votre CIN dans votre profil avant de pouvoir publier une annonce.</p>
-      <a routerLink="/profil" class="btn btn-secondary btn-sm">Accéder à la vérification</a>
+    <!-- Fiche récapitulative du bien déposé -->
+    <div class="recap-logement-boite">
+      <div class="recap-logement-entete">
+        <div class="recap-infos-gauche">
+          <span class="tag-label">RÉCAPITULATIF DU LOGEMENT ENREGISTRÉ</span>
+          <h2 class="recap-titre-bien">{{ recapAnnonce.titre }}</h2>
+          <p class="recap-localisation">
+            <app-icon name="map-pin" [size]="14"></app-icon>
+            <span>{{ recapAnnonce.quartier }}, {{ recapAnnonce.ville }}</span>
+          </p>
+        </div>
+
+        <div class="recap-prix-badge">
+          <span class="prix-montant">{{ recapAnnonce.loyer }} DT</span>
+          <span class="prix-unite">/ mois</span>
+          <small *ngIf="recapAnnonce.charges > 0" class="prix-charges">+ {{ recapAnnonce.charges }} DT charges</small>
+        </div>
+      </div>
+
+      <div class="recap-grille-details">
+        <div class="recap-detail-item">
+          <span class="label-detail">Places en colocation</span>
+          <strong>{{ recapAnnonce.nombrePlaces }} colocataire{{ recapAnnonce.nombrePlaces > 1 ? 's' : '' }}</strong>
+        </div>
+
+        <div class="recap-detail-item">
+          <span class="label-detail">Loyer estimé par colocataire</span>
+          <strong class="col-vert">
+            {{ Math.round((recapAnnonce.loyer + (recapAnnonce.charges || 0)) / (recapAnnonce.nombrePlaces || 1)) }} DT / mois
+          </strong>
+        </div>
+
+        <div class="recap-detail-item">
+          <span class="label-detail">Équipement</span>
+          <strong>{{ recapAnnonce.meuble ? 'Logement meublé' : 'Non meublé' }}</strong>
+        </div>
+
+        <div class="recap-detail-item">
+          <span class="label-detail">Durée de bail</span>
+          <strong>{{ recapAnnonce.dureeLocation }}</strong>
+        </div>
+      </div>
+
+      <!-- Galerie des photos soumises -->
+      <div *ngIf="recapAnnonce.photos && recapAnnonce.photos.length > 0" class="recap-photos-liste">
+        <div *ngFor="let photo of recapAnnonce.photos; let i = index" class="recap-photo-vignette">
+          <img [src]="photo" alt="Photo {{ i + 1 }}" />
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div *ngIf="chargement && modeEdition" class="card chargement-bloc">
-    <app-loader type="card"></app-loader>
-  </div>
-
-  <form *ngIf="!(chargement && modeEdition)" (ngSubmit)="enregistrer()" #formAnnonce="ngForm" class="card formulaire-annonce">
-    <div *ngIf="erreur" class="alerte-erreur">
-      <app-icon name="alert" [size]="18"></app-icon>
-      <span>{{ erreur }}</span>
+    <!-- Encadré des prochaines étapes -->
+    <div class="etapes-suivantes-boite">
+      <h3 class="etapes-titre">
+        <app-icon name="shield-check" [size]="18"></app-icon>
+        <span>Que se passe-t-il maintenant ?</span>
+      </h3>
+      <ol class="etapes-liste">
+        <li>
+          <strong>Modération sous 24h :</strong> Notre équipe administrative vérifie la cohérence du loyer, les photos et l'adresse.
+        </li>
+        <li>
+          <strong>Publication automatique :</strong> Dès approbation, le logement apparaît sur la liste des annonces publiques.
+        </li>
+        <li>
+          <strong>Gestion des candidatures :</strong> Vous recevrez des notifications directes dès qu'un étudiant vérifié postule à votre offre.
+        </li>
+      </ol>
     </div>
 
-    <!-- Section 1 : Localisation et Titre -->
-    <fieldset class="groupe-champs">
-      <legend class="legend-form">1. Localisation & Présentation</legend>
+    <!-- Décompte de redirection automatique -->
+    <div class="redirection-compteur">
+      <app-icon name="clock" [size]="15"></app-icon>
+      <span>
+        Redirection automatique vers votre tableau de bord dans <strong>{{ decompteSecondes }}s</strong>...
+      </span>
+    </div>
 
-      <div class="champ">
-        <label for="titre">Titre de l'annonce <span class="requis">*</span></label>
-        <input
-          id="titre"
-          type="text"
-          name="titre"
-          [(ngModel)]="titre"
-          required
-          placeholder="Ex : Chambre spacieuse dans S+3 à 5 min d'INSAT"
-          class="input"
-        />
-        <span class="aide-saisie">Un titre clair et précis avec la proximité d'une université ou station.</span>
-      </div>
+    <!-- Actions principales de sortie -->
+    <div class="confirmation-actions">
+      <button type="button" class="btn btn-primary btn-lg" (click)="retourDashboard()">
+        <app-icon name="dashboard" [size]="18"></app-icon>
+        <span>Retourner à mon tableau de bord</span>
+      </button>
 
-      <div class="grille-2-col">
-        <div class="champ">
-          <label for="ville">Gouvernorat <span class="requis">*</span></label>
-          <select id="ville" name="ville" [(ngModel)]="ville" required class="select">
-            <option value="" disabled selected>Choisir un gouvernorat</option>
-            <option *ngFor="let v of villes" [value]="v">{{ v }}</option>
-          </select>
-        </div>
+      <button type="button" class="btn btn-secondary" (click)="allerMesAnnonces()">
+        <app-icon name="home" [size]="16"></app-icon>
+        <span>Voir mes annonces</span>
+      </button>
 
-        <div class="champ">
-          <label for="quartier">Quartier / Cité <span class="requis">*</span></label>
-          <input
-            id="quartier"
-            type="text"
-            name="quartier"
-            [(ngModel)]="quartier"
-            required
-            placeholder="Ex : Centre Urbain Nord, Cité El Khadra..."
-            class="input"
-          />
-        </div>
-      </div>
-
-      <div class="champ">
-        <label for="description">Description détaillée <span class="requis">*</span></label>
-        <textarea
-          id="description"
-          name="description"
-          [(ngModel)]="description"
-          required
-          rows="5"
-          placeholder="Décrivez les pièces, l'ambiance, les équipements, les transports à proximité..."
-          class="textarea"
-        ></textarea>
-      </div>
-    </fieldset>
-
-    <!-- Section 2 : Loyer et Budget partagé -->
-    <fieldset class="groupe-champs">
-      <legend class="legend-form">2. Loyer & Modalités financières</legend>
-
-      <div class="grille-3-col">
-        <div class="champ">
-          <label for="loyer">Loyer global mensuel (DT) <span class="requis">*</span></label>
-          <input
-            id="loyer"
-            type="number"
-            name="loyer"
-            [(ngModel)]="loyer"
-            required
-            min="1"
-            placeholder="Ex : 800"
-            class="input"
-          />
-        </div>
-
-        <div class="champ">
-          <label for="charges">Charges estimées (DT / mois)</label>
-          <input
-            id="charges"
-            type="number"
-            name="charges"
-            [(ngModel)]="charges"
-            min="0"
-            placeholder="Ex : 50 (STEG, SONEDE, Internet)"
-            class="input"
-          />
-        </div>
-
-        <div class="champ">
-          <label for="nombrePlaces">Nombre total de places <span class="requis">*</span></label>
-          <input
-            id="nombrePlaces"
-            type="number"
-            name="nombrePlaces"
-            [(ngModel)]="nombrePlaces"
-            required
-            min="1"
-            max="10"
-            class="input"
-          />
-        </div>
-      </div>
-
-      <!-- Calcul en direct du budget par personne en DT sous le loyer -->
-      <div class="encart-budget-direct">
-        <div class="budget-icon">
-          <app-icon name="coins" [size]="24"></app-icon>
-        </div>
-        <div class="budget-info">
-          <span class="budget-titre">Estimation par colocataire (calcul automatique)</span>
-          <div class="budget-valeur">
-            <span class="montant">{{ budgetParPersonne }} DT</span>
-            <span class="frequence">/ personne / mois</span>
-          </div>
-          <span class="budget-note">Calculé sur la base de (loyer + charges) divisé par {{ nombrePlaces || 1 }} places.</span>
-        </div>
-      </div>
-
-      <div class="grille-2-col">
-        <div class="champ">
-          <label for="dureeLocation">Durée minimale de location</label>
-          <select id="dureeLocation" name="dureeLocation" [(ngModel)]="dureeLocation" class="select">
-            <option *ngFor="let opt of optionsDuree" [value]="opt">{{ opt }}</option>
-          </select>
-        </div>
-
-        <div class="champ case-meuble">
-          <label class="label-case">
-            <input type="checkbox" name="meuble" [(ngModel)]="meuble" />
-            <span>Logement entièrement meublé et équipé</span>
-          </label>
-          <span class="aide-saisie">Cochez si lits, bureaux, réfrigérateur, gazinière sont déjà fournis.</span>
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- Section 3 : Photos (maximum 4) -->
-    <fieldset class="groupe-champs">
-      <legend class="legend-form">3. Photos du logement ({{ photos.length }}/4)</legend>
-      <p class="aide-photos">
-        Ajoutez jusqu'à 4 photos claires du logement. Les photos sont automatiquement optimisées et allégées.
-      </p>
-
-      <div class="galerie-photos">
-        <div *ngFor="let photo of photos; let i = index" class="photo-apercu-carte">
-          <img [src]="photo" alt="Photo {{ i + 1 }}" class="photo-img" />
-          <button
-            type="button"
-            class="btn-supprimer-photo"
-            (click)="supprimerPhoto(i)"
-            title="Supprimer cette photo"
-          >
-            <app-icon name="trash" [size]="14"></app-icon>
-          </button>
-        </div>
-
-        <label *ngIf="photos.length < 4" class="zone-ajout-photo" [class.desactive]="chargementPhoto">
-          <input
-            type="file"
-            accept="image/png, image/jpeg, image/webp"
-            (change)="ajouterPhoto($event)"
-            [disabled]="chargementPhoto"
-            class="input-fichier-cache"
-          />
-          <div class="contenu-zone-ajout">
-            <app-icon [name]="chargementPhoto ? 'clock' : 'camera'" [size]="24"></app-icon>
-            <span>{{ chargementPhoto ? 'Optimisation...' : 'Ajouter une photo' }}</span>
-            <small>PNG, JPG max 5 Mo</small>
-          </div>
-        </label>
-      </div>
-    </fieldset>
-
-    <!-- Actions du formulaire -->
-    <div class="actions-formulaire">
-      <a routerLink="/mes-annonces" class="btn btn-secondary">Annuler</a>
-      <button
-        type="submit"
-        class="btn btn-primary"
-        [disabled]="chargement || chargementPhoto || !estVerifie"
-      >
-        <app-icon *ngIf="chargement" name="clock" [size]="16"></app-icon>
-        <app-icon *ngIf="!chargement" [name]="modeEdition ? 'check' : 'plus'" [size]="16"></app-icon>
-        <span>
-          {{ chargement ? 'Enregistrement en cours...' : (modeEdition ? 'Enregistrer les modifications' : 'Déposer l\'annonce') }}
-        </span>
+      <button type="button" class="btn btn-secondary" (click)="creerNouvelleAnnonce()">
+        <app-icon name="plus" [size]="16"></app-icon>
+        <span>Déposer un autre logement</span>
       </button>
     </div>
-  </form>
+  </div>
+
+  <!-- 2. FORMULAIRE DE CRÉATION OU MODIFICATION D'UNE ANNONCE -->
+  <ng-container *ngIf="!soumissionReussie">
+    <div class="en-tete-nav">
+      <a routerLink="/mes-annonces" class="lien-retour">
+        <app-icon name="arrow-left" [size]="16"></app-icon>
+        <span>Retour à mes annonces</span>
+      </a>
+    </div>
+
+    <div class="en-tete-form">
+      <span class="tag-label">{{ modeEdition ? 'MODIFICATION' : 'NOUVELLE OFFRE' }}</span>
+      <h1 class="titre-form">{{ modeEdition ? 'Modifier votre annonce' : 'Déposer une nouvelle annonce' }}</h1>
+      <p class="desc-form">
+        {{ modeEdition 
+          ? 'Toute modification sur une annonce déjà traitée la renverra automatiquement en modération.' 
+          : 'Remplissez les détails de votre logement pour trouver des colocataires fiables et vérifiés.' }}
+      </p>
+    </div>
+
+    <!-- Avertissement si le propriétaire n'est pas vérifié -->
+    <div *ngIf="!estVerifie" class="alerte-non-verifie">
+      <app-icon name="alert" [size]="20"></app-icon>
+      <div class="alerte-contenu">
+        <strong>Vérification d'identité requise</strong>
+        <p>Votre profil n'a pas encore été certifié par notre équipe. Vous devez transmettre votre CIN dans votre profil avant de pouvoir publier une annonce.</p>
+        <a routerLink="/profil" class="btn btn-secondary btn-sm">Accéder à la vérification</a>
+      </div>
+    </div>
+
+    <div *ngIf="chargement && modeEdition" class="card chargement-bloc">
+      <app-loader type="card"></app-loader>
+    </div>
+
+    <form *ngIf="!(chargement && modeEdition)" (ngSubmit)="enregistrer()" #formAnnonce="ngForm" class="card formulaire-annonce">
+      <div *ngIf="erreur" class="alerte-erreur">
+        <app-icon name="alert" [size]="18"></app-icon>
+        <span>{{ erreur }}</span>
+      </div>
+
+      <!-- Section 1 : Localisation et Titre -->
+      <fieldset class="groupe-champs">
+        <legend class="legend-form">1. Localisation & Présentation</legend>
+
+        <div class="champ">
+          <label for="titre">Titre de l'annonce <span class="requis">*</span></label>
+          <input
+            id="titre"
+            type="text"
+            name="titre"
+            [(ngModel)]="titre"
+            required
+            placeholder="Ex : Chambre spacieuse dans S+3 à 5 min d'INSAT"
+            class="input"
+          />
+          <span class="aide-saisie">Un titre clair et précis avec la proximité d'une université ou station.</span>
+        </div>
+
+        <div class="grille-2-col">
+          <div class="champ">
+            <label for="ville">Gouvernorat <span class="requis">*</span></label>
+            <select id="ville" name="ville" [(ngModel)]="ville" required class="select">
+              <option value="" disabled selected>Choisir un gouvernorat</option>
+              <option *ngFor="let v of villes" [value]="v">{{ v }}</option>
+            </select>
+          </div>
+
+          <div class="champ">
+            <label for="quartier">Quartier / Cité <span class="requis">*</span></label>
+            <input
+              id="quartier"
+              type="text"
+              name="quartier"
+              [(ngModel)]="quartier"
+              required
+              placeholder="Ex : Centre Urbain Nord, Cité El Khadra..."
+              class="input"
+            />
+          </div>
+        </div>
+
+        <div class="champ">
+          <label for="description">Description détaillée <span class="requis">*</span></label>
+          <textarea
+            id="description"
+            name="description"
+            [(ngModel)]="description"
+            required
+            rows="5"
+            placeholder="Décrivez les pièces, l'ambiance, les équipements, les transports à proximité..."
+            class="textarea"
+          ></textarea>
+        </div>
+      </fieldset>
+
+      <!-- Section 2 : Loyer et Budget partagé -->
+      <fieldset class="groupe-champs">
+        <legend class="legend-form">2. Loyer & Modalités financières</legend>
+
+        <div class="grille-3-col">
+          <div class="champ">
+            <label for="loyer">Loyer global mensuel (DT) <span class="requis">*</span></label>
+            <input
+              id="loyer"
+              type="number"
+              name="loyer"
+              [(ngModel)]="loyer"
+              required
+              min="1"
+              placeholder="Ex : 800"
+              class="input"
+            />
+          </div>
+
+          <div class="champ">
+            <label for="charges">Charges estimées (DT / mois)</label>
+            <input
+              id="charges"
+              type="number"
+              name="charges"
+              [(ngModel)]="charges"
+              min="0"
+              placeholder="Ex : 50 (STEG, SONEDE, Internet)"
+              class="input"
+            />
+          </div>
+
+          <div class="champ">
+            <label for="nombrePlaces">Nombre total de places <span class="requis">*</span></label>
+            <input
+              id="nombrePlaces"
+              type="number"
+              name="nombrePlaces"
+              [(ngModel)]="nombrePlaces"
+              required
+              min="1"
+              max="10"
+              class="input"
+            />
+          </div>
+        </div>
+
+        <!-- Calcul en direct du budget par personne en DT sous le loyer -->
+        <div class="encart-budget-direct">
+          <div class="budget-icon">
+            <app-icon name="coins" [size]="24"></app-icon>
+          </div>
+          <div class="budget-info">
+            <span class="budget-titre">Estimation par colocataire (calcul automatique)</span>
+            <div class="budget-valeur">
+              <span class="montant">{{ budgetParPersonne }} DT</span>
+              <span class="frequence">/ personne / mois</span>
+            </div>
+            <span class="budget-note">Calculé sur la base de (loyer + charges) divisé par {{ nombrePlaces || 1 }} places.</span>
+          </div>
+        </div>
+
+        <div class="grille-2-col">
+          <div class="champ">
+            <label for="dureeLocation">Durée minimale de location</label>
+            <select id="dureeLocation" name="dureeLocation" [(ngModel)]="dureeLocation" class="select">
+              <option *ngFor="let opt of optionsDuree" [value]="opt">{{ opt }}</option>
+            </select>
+          </div>
+
+          <div class="champ case-meuble">
+            <label class="label-case">
+              <input type="checkbox" name="meuble" [(ngModel)]="meuble" />
+              <span>Logement entièrement meublé et équipé</span>
+            </label>
+            <span class="aide-saisie">Cochez si lits, bureaux, réfrigérateur, gazinière sont déjà fournis.</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Section 3 : Photos (maximum 4) -->
+      <fieldset class="groupe-champs">
+        <legend class="legend-form">3. Photos du logement ({{ photos.length }}/4)</legend>
+        <p class="aide-photos">
+          Ajoutez jusqu'à 4 photos claires du logement. Les photos sont automatiquement optimisées et allégées.
+        </p>
+
+        <div class="galerie-photos">
+          <div *ngFor="let photo of photos; let i = index" class="photo-apercu-carte">
+            <img [src]="photo" alt="Photo {{ i + 1 }}" class="photo-img" />
+            <button
+              type="button"
+              class="btn-supprimer-photo"
+              (click)="supprimerPhoto(i)"
+              title="Supprimer cette photo"
+            >
+              <app-icon name="trash" [size]="14"></app-icon>
+            </button>
+          </div>
+
+          <label *ngIf="photos.length < 4" class="zone-ajout-photo" [class.desactive]="chargementPhoto">
+            <input
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              (change)="ajouterPhoto($event)"
+              [disabled]="chargementPhoto"
+              class="input-fichier-cache"
+            />
+            <div class="contenu-zone-ajout">
+              <app-icon [name]="chargementPhoto ? 'clock' : 'camera'" [size]="24"></app-icon>
+              <span>{{ chargementPhoto ? 'Optimisation...' : 'Ajouter une photo' }}</span>
+              <small>PNG, JPG max 5 Mo</small>
+            </div>
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- Actions du formulaire -->
+      <div class="actions-formulaire">
+        <a routerLink="/mes-annonces" class="btn btn-secondary">Annuler</a>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="chargement || chargementPhoto || !estVerifie"
+        >
+          <app-icon *ngIf="chargement" name="clock" [size]="16"></app-icon>
+          <app-icon *ngIf="!chargement" [name]="modeEdition ? 'check' : 'plus'" [size]="16"></app-icon>
+          <span>
+            {{ chargement ? 'Enregistrement en cours...' : (modeEdition ? 'Enregistrer les modifications' : 'Déposer l\'annonce') }}
+          </span>
+        </button>
+      </div>
+    </form>
+  </ng-container>
 </div>
 

@@ -173,6 +173,7 @@ service cloud.firestore {
       allow read: if isAcceptedMembre(annonceId) ||
         (isSignedIn() && exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid))) ||
         (resource.data.visibilite == 'public' && resource.data.statut == 'ouvert') ||
+        resource.data.statut == 'confirme' ||
         (isSignedIn() && resource.data.proprietaireId == request.auth.uid) ||
         isAdmin();
 

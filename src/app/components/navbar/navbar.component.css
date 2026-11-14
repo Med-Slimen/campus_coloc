@@ -78,6 +78,46 @@
   font-weight: 600;
 }
 
+/* Badge spécial pour l'Espace de colocation actif dans la barre supérieure */
+.badge-nav-espace {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  background-color: #EBF3FA !important;
+  color: var(--blue) !important;
+  border: 1px solid var(--blue) !important;
+  border-bottom: 1px solid var(--blue) !important;
+  border-radius: var(--radius) !important;
+  padding: 5px 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.12s ease;
+}
+
+.badge-nav-espace:hover {
+  background-color: var(--blue) !important;
+  color: #FFFFFF !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.badge-nav-espace.lien-actif {
+  background-color: var(--blue) !important;
+  color: #FFFFFF !important;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.lien-mobile-coloc-actif {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  background-color: #EBF3FA;
+  color: var(--blue) !important;
+  border-radius: var(--radius);
+  padding: 10px 12px !important;
+  font-weight: 700 !important;
+}
+
 /* Bouton icône pour la cloche */
 .btn-icone-nav {
   background: transparent;

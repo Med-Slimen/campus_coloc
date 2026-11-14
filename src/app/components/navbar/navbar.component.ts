@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 import { IconComponent } from '../icon/icon.component';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { AuthService } from '../../services/auth.service';
@@ -22,6 +23,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private espaceService = inject(EspaceService);
   private toastService = inject(ToastService);
   private router = inject(Router);
+  private cdRef = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
 
   // Rôle forcé en entrée (ex. prévisualisation)
   @Input() mode?: RoleUtilisateur | 'visiteur';
@@ -39,8 +42,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   chargementNotifications: boolean = false;
   actionNotifEnCours: boolean = false;
 
-  // Référence de désinscription onSnapshot
+  // Identifiant de l'espace de colocation actif de l'utilisateur (s'il en a un)
+  espaceActifId: string | null = null;
+
+  // Référence de désinscription onSnapshot & router
   private unsubscribeNotifs?: () => void;
+  private routerSubscription?: Subscription;
 
   // Détermine la variante active de la barre de navigation
   get roleActif(): 'visiteur' | RoleUtilisateur {
@@ -63,10 +70,48 @@ export class NavbarComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     await this.authService.attendreAuth();
     this.initialiserEcouteNotifications();
+    await this.chargerEspaceActif();
+    this.cdRef.markForCheck();
+
+    // Écoute les événements de navigation pour synchroniser la barre et fermer les menus
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.fermerMenus();
+        this.chargerEspaceActif();
+        this.cdRef.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
     this.arreterEcouteNotifications();
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  // Charge l'espace actif de l'utilisateur connecté s'il existe
+  async chargerEspaceActif(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) {
+      this.espaceActifId = null;
+      return;
+    }
+
+    try {
+      if (user.role === 'proprietaire') {
+        const espaces = await this.espaceService.getEspacesByProprietaire(user.uid);
+        this.espaceActifId = espaces.length > 0 ? (espaces[0].id || espaces[0].annonceId || null) : null;
+      } else if (user.role === 'etudiant') {
+        const espaces = await this.espaceService.getEspacesByEtudiant(user.uid);
+        this.espaceActifId = espaces.length > 0 ? (espaces[0].id || espaces[0].annonceId || null) : null;
+      } else {
+        this.espaceActifId = null;
+      }
+    } catch {
+      this.espaceActifId = null;
+    }
+    this.cdRef.markForCheck();
   }
 
   // Ferme les menus lors d'un clic en dehors

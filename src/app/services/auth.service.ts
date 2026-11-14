@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, NgZone } from '@angular/core';
 import { auth } from '../firebase';
 import {
   createUserWithEmailAndPassword,
@@ -19,6 +19,7 @@ import { User, RoleUtilisateur } from '../models';
 })
 export class AuthService {
   private userService = inject(UserService);
+  private ngZone = inject(NgZone);
 
   // Document Firestore de l'utilisateur actuellement connecté
   currentUser: User | null = null;
@@ -32,29 +33,54 @@ export class AuthService {
 
   constructor() {
     this.authInitialiseePromise = new Promise((resolve) => {
-      // Écoute les changements d'état d'authentification Firebase
-      onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      // Attente active de la restauration complète de l'état Firebase Auth depuis IndexedDB
+      auth.authStateReady().then(async () => {
+        const firebaseUser = auth.currentUser;
         if (firebaseUser) {
           try {
-            // Lecture du document profil dans Firestore
             let userDoc = await this.userService.getUser(firebaseUser.uid);
-
-            // Si le document n'est pas encore accessible, attendre 500 ms et réessayer une fois
             if (!userDoc) {
               await new Promise(r => setTimeout(r, 500));
               userDoc = await this.userService.getUser(firebaseUser.uid);
             }
-
             if (userDoc) {
-              this.currentUser = userDoc;
+              this.ngZone.run(() => {
+                this.currentUser = userDoc;
+              });
+            }
+          } catch (err) {
+            console.error('Erreur lors de la récupération du profil utilisateur initial :', err);
+          }
+        }
+
+        if (!this.estInitialise) {
+          this.estInitialise = true;
+          resolve(this.currentUser);
+        }
+      });
+
+      // Écoute des changements d'état d'authentification Firebase
+      onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          try {
+            let userDoc = await this.userService.getUser(firebaseUser.uid);
+            if (!userDoc) {
+              await new Promise(r => setTimeout(r, 500));
+              userDoc = await this.userService.getUser(firebaseUser.uid);
+            }
+            if (userDoc) {
+              this.ngZone.run(() => {
+                this.currentUser = userDoc;
+              });
             }
           } catch (err) {
             console.error('Erreur lors de la récupération du profil utilisateur :', err);
           }
         } else {
-          // Ne jamais écraser un utilisateur défini par register avec null
           if (!this.inscriptionEnCours) {
-            this.currentUser = null;
+            this.ngZone.run(() => {
+              this.currentUser = null;
+            });
           }
         }
 
@@ -68,10 +94,26 @@ export class AuthService {
 
   // Attend la vérification initiale de l'état d'authentification Firebase
   async attendreAuth(): Promise<User | null> {
-    if (this.estInitialise) {
+    await auth.authStateReady();
+    if (this.estInitialise && this.currentUser) {
       return this.currentUser;
     }
-    return this.authInitialiseePromise;
+    await this.authInitialiseePromise;
+
+    // Double vérification si l'utilisateur est authentifié mais que currentUser n'est pas encore sync
+    if (!this.currentUser && auth.currentUser) {
+      try {
+        let userDoc = await this.userService.getUser(auth.currentUser.uid);
+        if (userDoc) {
+          this.ngZone.run(() => {
+            this.currentUser = userDoc;
+          });
+        }
+      } catch {
+        // Silencieux
+      }
+    }
+    return this.currentUser;
   }
 
   // Crée un nouveau compte Firebase Auth et enregistre le document users/{uid}
@@ -112,7 +154,9 @@ export class AuthService {
       await this.userService.createUser(uid, nouveauProfil);
 
       // On affecte immédiatement le profil en mémoire pour éviter toute écrasure prématurée
-      this.currentUser = nouveauProfil;
+      this.ngZone.run(() => {
+        this.currentUser = nouveauProfil;
+      });
 
       // 4. Vérification de la présence du document avec pause de 500ms si nécessaire
       let verifDoc = await this.userService.getUser(uid);
@@ -122,10 +166,12 @@ export class AuthService {
       }
 
       if (verifDoc) {
-        this.currentUser = verifDoc;
+        this.ngZone.run(() => {
+          this.currentUser = verifDoc;
+        });
       }
 
-      return this.currentUser;
+      return (verifDoc || nouveauProfil);
     } finally {
       this.inscriptionEnCours = false;
     }
@@ -146,14 +192,18 @@ export class AuthService {
       throw new Error('Votre profil utilisateur est introuvable.');
     }
 
-    this.currentUser = userDoc;
-    return this.currentUser;
+    this.ngZone.run(() => {
+      this.currentUser = userDoc;
+    });
+    return userDoc;
   }
 
   // Déconnecte l'utilisateur et réinitialise la session locale
   async logout(): Promise<void> {
     await signOut(auth);
-    this.currentUser = null;
+    this.ngZone.run(() => {
+      this.currentUser = null;
+    });
   }
 
   // Renvoie la route de redirection par défaut selon le rôle
