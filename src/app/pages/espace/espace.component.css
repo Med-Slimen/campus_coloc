@@ -1055,6 +1055,299 @@
   background-color: #F8F9FA;
 }
 
+.input-textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* --- Section des demandes de départ pour le 1er locataire --- */
+.bloc-demandes-depart-section {
+  background-color: #FFFBEB;
+  border: 1px solid #F59E0B;
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.desc-demandes-depart-info {
+  font-size: 12px;
+  color: #92400E;
+  margin: 4px 0 10px;
+  line-height: 1.4;
+}
+
+.demande-depart-item {
+  border: 1px solid #F59E0B;
+  background-color: #FFFFFF;
+}
+
+.motif-depart-texte {
+  display: block;
+  font-size: 11.5px;
+  color: #B45309;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Boutons dans l'encart demande de départ */
+.bloc-depart-autorise {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-inviter-remplacant-encart {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.bloc-remplacant-en-attente {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-annuler-remplacant {
+  align-self: flex-start;
+  font-size: 11.5px;
+  padding: 4px 8px;
+}
+
+/* --- VUE OFFRE DE REMPLACEMENT (Tous les détails du logement) --- */
+.fiche-proposition-remplacement {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px;
+  background-color: #FFFFFF;
+  border: var(--border-main);
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.entete-proposition {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: var(--border-main);
+  padding-bottom: 16px;
+}
+
+.tag-proposition-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.titre-proposition {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.sous-titre-invitant {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Galerie photos */
+.galerie-proposition {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-principale-cadre {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--ink);
+}
+
+.photo-principale {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.miniatures-ligne {
+  display: flex;
+  gap: 8px;
+}
+
+.miniature-img {
+  width: 90px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--ink);
+}
+
+/* Grille specs */
+.grille-specs-proposition {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.spec-case {
+  background-color: #F8F9FA;
+  border: 1px solid rgba(23, 32, 42, 0.12);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-case.highlight-prix {
+  background-color: #ECFDF5;
+  border: 2px solid var(--ok);
+}
+
+.spec-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.prix-part {
+  font-size: 20px;
+  color: #065F46;
+}
+
+.prix-part small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.detail-loyer-global {
+  font-size: 11px;
+  color: #047857;
+}
+
+.section-proposition {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed rgba(23, 32, 42, 0.15);
+  padding-top: 16px;
+}
+
+.texte-description-logement {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* Futurs colocataires */
+.liste-futurs-colocs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.futur-coloc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #F8F9FA;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(23, 32, 42, 0.1);
+}
+
+.futur-coloc-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.futur-coloc-infos strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.futur-coloc-infos small {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.tag-role-coloc {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+/* Règles proposition */
+.liste-regles-proposition {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.liste-regles-proposition li {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+/* Actions décision proposition */
+.actions-decision-proposition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: var(--border-main);
+}
+
+.btn-action-accepter {
+  flex: 2;
+  min-width: 240px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn-action-refuser {
+  flex: 1;
+  min-width: 130px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* Responsive */
 @media (max-width: 860px) {
   .grille-deux-colonnes {

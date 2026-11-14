@@ -56,10 +56,117 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- VUE SPÉCIALE : PROPOSITION DE REMPLACEMENT (Tous les détails du logement) -->
+  <!-- Visible uniquement pour l'étudiant invité en remplacement                  -->
+  <!-- ========================================================================= -->
+  <div *ngIf="!chargement && !erreur && !accesRefuse && estCandidatRemplacement && annonce && espace" class="fiche-proposition-remplacement card">
+    <div class="entete-proposition">
+      <div class="tag-proposition-badge">
+        <app-icon name="users" [size]="18"></app-icon>
+        <span>OFFRE DE REMPLACEMENT DE COLOCATION</span>
+      </div>
+      <h1 class="titre-proposition">{{ annonce.titre }}</h1>
+      <p class="sous-titre-invitant" *ngIf="colocataireSortant">
+        Proposition transmise par <strong>{{ colocataireSortant.user?.nom || 'Un colocataire sortant' }}</strong> pour reprendre sa place dans cette colocation confirmée.
+      </p>
+    </div>
+
+    <!-- Photos du logement -->
+    <div class="galerie-proposition" *ngIf="annonce.photos && annonce.photos.length > 0">
+      <div class="photo-principale-cadre">
+        <img [src]="annonce.photos[0]" [alt]="annonce.titre" class="photo-principale" />
+      </div>
+      <div class="miniatures-ligne" *ngIf="annonce.photos.length > 1">
+        <img
+          *ngFor="let p of annonce.photos.slice(1, 5)"
+          [src]="p"
+          [alt]="annonce.titre"
+          class="miniature-img"
+        />
+      </div>
+    </div>
+
+    <!-- Grille des caractéristiques et informations clés -->
+    <div class="grille-specs-proposition">
+      <div class="spec-case">
+        <span class="spec-label">Localisation</span>
+        <strong>{{ annonce.quartier }}, {{ annonce.ville }}</strong>
+      </div>
+      <div class="spec-case">
+        <span class="spec-label">Logement</span>
+        <strong>{{ annonce.meuble ? 'Entièrement meublé' : 'Non meublé' }}</strong>
+        <small>{{ membresAcceptes.length }} / {{ annonce.nombrePlaces }} places occupées</small>
+      </div>
+      <div class="spec-case highlight-prix">
+        <span class="spec-label">Votre part de loyer</span>
+        <strong class="prix-part">{{ partDeLoyer }} DT <small>/ mois</small></strong>
+        <small class="detail-loyer-global">Loyer total: {{ annonce.loyer }} DT + charges: {{ annonce.charges || 0 }} DT</small>
+      </div>
+      <div class="spec-case">
+        <span class="spec-label">Durée & Fin convenue</span>
+        <strong>{{ espace.dureeLocation || annonce.dureeLocation || '1 semestre' }}</strong>
+        <small *ngIf="espace.dateFinLocation">Jusqu'au {{ espace.dateFinLocation | date:'dd/MM/yyyy' }}</small>
+      </div>
+    </div>
+
+    <!-- Description du logement -->
+    <div class="section-proposition" *ngIf="annonce.description">
+      <span class="tag-label">DESCRIPTION DU LOGEMENT</span>
+      <p class="texte-description-logement">{{ annonce.description }}</p>
+    </div>
+
+    <!-- Les colocataires actuels avec qui l'étudiant vivra -->
+    <div class="section-proposition">
+      <span class="tag-label">VOS FUTURS COLOCATAIRES ({{ membresAcceptes.length }} ACTUELLEMENT)</span>
+      <div class="liste-futurs-colocs">
+        <div *ngFor="let m of membresAcceptes" class="futur-coloc-item">
+          <app-avatar [nom]="m.user?.nom || 'Colocataire'" [photoUrl]="m.user?.photo" [taille]="40" role="etudiant"></app-avatar>
+          <div class="futur-coloc-infos">
+            <strong>{{ m.user?.nom || 'Étudiant' }}</strong>
+            <small>{{ m.user?.filiere || m.user?.faculte || 'Étudiant certifié' }}</small>
+            <span class="tag-premier-locataire tag-sm" *ngIf="m.membre.premierLocataire">Premier locataire</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Règles de la maison -->
+    <div class="section-proposition" *ngIf="espace.reglesMaison && espace.reglesMaison.length > 0">
+      <span class="tag-label">RÈGLES DE VIE COMMUNE</span>
+      <ul class="liste-regles-proposition">
+        <li *ngFor="let r of espace.reglesMaison">• {{ r }}</li>
+      </ul>
+    </div>
+
+    <!-- Actions Accepter ou Refuser -->
+    <div class="actions-decision-proposition">
+      <button
+        type="button"
+        class="btn btn-primary btn-action-accepter"
+        (click)="demanderAccepterProposition()"
+        [disabled]="actionEnCours"
+      >
+        <app-icon name="check" [size]="18"></app-icon>
+        <span>Accepter le remplacement & intégrer la colocation</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-danger btn-action-refuser"
+        (click)="demanderRefuserProposition()"
+        [disabled]="actionEnCours"
+      >
+        <app-icon name="close" [size]="16"></app-icon>
+        <span>Refuser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- CONTENU DE L'ESPACE : DEUX COLONNES (Gauche: détails, Droite: chat)      -->
   <!-- Accessible UNIQUEMENT si membre accepté, propriétaire ou admin            -->
   <!-- ========================================================================= -->
-  <div *ngIf="!chargement && !erreur && !accesRefuse && !estInviteEnAttente && espace && annonce" class="contenu-espace-actif">
+  <div *ngIf="!chargement && !erreur && !accesRefuse && !estInviteEnAttente && !estCandidatRemplacement && espace && annonce" class="contenu-espace-actif">
     <!-- En-tête de l'espace -->
     <header class="en-tete-espace">
       <div>
@@ -451,32 +558,35 @@
                 </button>
               </div>
             </div>
-          <!-- Candidatures de remplacement de colocataire (Premier locataire) -->
-          <div *ngIf="candidaturesRemplacement.length > 0" class="bloc-candidatures-en-attente bloc-remplacements-section">
-            <span class="tag-label">CANDIDATURES DE REMPLACEMENT (DÉPART DE COLOCATAIRE)</span>
-            <p class="desc-remplacements-info">
-              Un colocataire a proposé un remplaçant pour quitter la colocation confirmée. En l'acceptant, le nouveau colocataire intégrera l'espace et le colocataire sortant sera automatiquement libéré.
+          <!-- Demandes de départ de colocataires (Premier locataire uniquement) -->
+          <div *ngIf="demandesDepartEnAttente.length > 0" class="bloc-candidatures-en-attente bloc-demandes-depart-section">
+            <span class="tag-label">DEMANDES DE DÉPART DE COLOCATAIRES</span>
+            <p class="desc-demandes-depart-info">
+              Les colocataires suivants ont formulé une demande pour quitter la colocation confirmée. En acceptant leur demande, vous les autorisez à inviter un remplaçant.
             </p>
-            <div *ngFor="let item of candidaturesRemplacement" class="candidat-item candidat-remplacement-item">
+            <div *ngFor="let item of demandesDepartEnAttente" class="candidat-item demande-depart-item">
               <div class="candidat-nom-type">
-                <strong>{{ item.user?.nom || 'Étudiant' }}</strong>
-                <small class="remplace-label">
-                  Remplacement proposé ({{ item.user?.email }})
+                <strong>{{ item.user?.nom || 'Colocataire' }}</strong>
+                <small *ngIf="item.membre.motifDepart" class="motif-depart-texte">
+                  Motif : « {{ item.membre.motifDepart }} »
+                </small>
+                <small *ngIf="!item.membre.motifDepart" class="motif-depart-texte">
+                  Aucun motif particulier spécifié
                 </small>
               </div>
               <div class="candidat-actions">
                 <button
                   type="button"
                   class="btn btn-primary btn-sm"
-                  (click)="repondreRemplacement(item, 'accepte')"
+                  (click)="repondreDemandeDepart(item, 'accepte')"
                   [disabled]="actionEnCours"
                 >
-                  Valider le remplacement
+                  Accepter le départ
                 </button>
                 <button
                   type="button"
                   class="btn btn-danger btn-sm"
-                  (click)="repondreRemplacement(item, 'refuse')"
+                  (click)="repondreDemandeDepart(item, 'refuse')"
                   [disabled]="actionEnCours"
                 >
                   Refuser
@@ -486,16 +596,51 @@
           </div>
         </div>
 
-        <!-- Encart pour le colocataire ayant fait une demande de remplacement -->
-        <div *ngIf="aDemandeDepart" class="card encart-demande-depart">
+        <!-- Encart pour le colocataire ayant fait une demande de départ -->
+        <div *ngIf="aDemandeDepart && !estProprietaire" class="card encart-demande-depart">
           <div class="icone-remplacement-encart">
             <app-icon name="alert" [size]="20"></app-icon>
           </div>
           <div class="texte-remplacement-encart">
-            <strong>Demande de remplacement en cours</strong>
-            <p>
-              Votre proposition de remplaçant a été transmise au premier locataire. Dès qu'elle sera validée, vous serez automatiquement libéré(e) de cette colocation.
-            </p>
+            <!-- Cas 1 : En attente d'approbation du 1er locataire -->
+            <div *ngIf="statutDepart === 'en_attente'">
+              <strong>Demande de départ transmise au premier locataire</strong>
+              <p>
+                Votre demande est en cours d'examen par le premier locataire. Dès qu'il l'aura acceptée, vous serez invité(e) à désigner un remplaçant certifié.
+              </p>
+            </div>
+
+            <!-- Cas 2 : Demande acceptée, en attente d'inviter un remplaçant -->
+            <div *ngIf="statutDepart === 'accepte' && !remplacantInvite" class="bloc-depart-autorise">
+              <strong>Demande de départ approuvée par le premier locataire !</strong>
+              <p>
+                Vous êtes autorisé(e) à quitter la colocation dès qu'un remplaçant prend votre suite. Invitez un étudiant certifié pour lui transmettre tous les détails du logement.
+              </p>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm btn-inviter-remplacant-encart"
+                (click)="ouvrirDialogInviterRemplacant()"
+              >
+                <app-icon name="plus" [size]="14"></app-icon>
+                <span>Inviter un remplaçant</span>
+              </button>
+            </div>
+
+            <!-- Cas 3 : Remplaçant invité, en attente de sa décision -->
+            <div *ngIf="statutDepart === 'accepte' && remplacantInvite" class="bloc-remplacant-en-attente">
+              <strong>Remplaçant invité : en attente de sa décision</strong>
+              <p>
+                Vous avez proposé <strong>{{ remplacantInvite.user?.nom || remplacantInvite.user?.email }}</strong>. Tous les détails du logement lui ont été transmis. Dès qu'il aura accepté, vous serez <strong>automatiquement libéré(e)</strong> de la colocation.
+              </p>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm btn-annuler-remplacant"
+                (click)="annulerRemplacant(remplacantInvite.membre.etudiantId)"
+                [disabled]="actionEnCours"
+              >
+                <span>Changer de remplaçant / Annuler cette invitation</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -508,7 +653,7 @@
             [disabled]="actionEnCours"
           >
             <app-icon [name]="estConfirme ? 'users' : 'log-out'" [size]="14"></app-icon>
-            <span>{{ estConfirme ? 'Proposer un remplaçant pour quitter' : 'Quitter cette colocation' }}</span>
+            <span>{{ estConfirme ? 'Demander à quitter la colocation' : 'Quitter cette colocation' }}</span>
           </button>
         </div>
 
@@ -611,23 +756,76 @@
     (annuler)="annulerConfirmerColocation()"
   ></app-confirm-dialog>
 
-  <!-- 4. Dialogue pour proposer un remplaçant (quand la colocation est confirmée) -->
-  <div *ngIf="dialogRemplacementOuvert" class="modal-remplacement-overlay">
+  <!-- 4. Dialogue de demande de départ auprès du premier locataire (Colocation confirmée) -->
+  <div *ngIf="dialogDemandeDepartOuvert" class="modal-remplacement-overlay">
     <div class="modal-remplacement-card card">
       <div class="modal-remplacement-header">
         <div class="modal-titre-avec-icone">
-          <app-icon name="users" [size]="20"></app-icon>
-          <h3>Proposer un remplaçant pour quitter</h3>
+          <app-icon name="log-out" [size]="20"></app-icon>
+          <h3>Demander l'autorisation de quitter la colocation</h3>
         </div>
-        <button type="button" class="btn-fermer-modal" (click)="fermerDialogRemplacement()">✕</button>
+        <button type="button" class="btn-fermer-modal" (click)="fermerDialogDemandeDepart()">✕</button>
       </div>
 
       <div class="modal-remplacement-body">
         <p class="modal-info-remplacement">
-          La colocation étant confirmée et le bail scellé, votre engagement financier reste actif jusqu'à ce qu'un remplaçant prenne votre suite.
+          La colocation étant confirmée et le bail scellé, votre départ nécessite l'accord préalable du premier locataire.
         </p>
         <p class="modal-info-sub">
-          Indiquez l'adresse email de l'étudiant certifié qui vous remplacera. Dès que le premier locataire validera sa candidature, vous serez <strong>automatiquement libéré(e)</strong> de la colocation.
+          Une fois votre demande validée par le premier locataire, vous pourrez inviter un remplaçant certifié. Dès que ce remplaçant aura accepté les conditions du logement, vous quitterez automatiquement la colocation.
+        </p>
+
+        <div class="champ-form-modal">
+          <label for="inputMotifDepart" class="label-champ">Motif ou explication de votre départ (optionnel) :</label>
+          <textarea
+            id="inputMotifDepart"
+            rows="3"
+            class="input-invit w-full input-textarea"
+            placeholder="Ex : Stage dans une autre ville, changement d'université..."
+            [(ngModel)]="motifDemandeDepart"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-remplacement-footer">
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="fermerDialogDemandeDepart()"
+          [disabled]="demandeDepartEnCours"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="confirmerDemandeDepart()"
+          [disabled]="demandeDepartEnCours"
+        >
+          <app-icon name="check" [size]="14"></app-icon>
+          <span>{{ demandeDepartEnCours ? 'Envoi en cours...' : 'Transmettre ma demande' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Dialogue pour inviter un remplaçant (une fois la demande acceptée) -->
+  <div *ngIf="dialogInviterRemplacantOuvert" class="modal-remplacement-overlay">
+    <div class="modal-remplacement-card card">
+      <div class="modal-remplacement-header">
+        <div class="modal-titre-avec-icone">
+          <app-icon name="users" [size]="20"></app-icon>
+          <h3>Inviter un étudiant remplaçant</h3>
+        </div>
+        <button type="button" class="btn-fermer-modal" (click)="fermerDialogInviterRemplacant()">✕</button>
+      </div>
+
+      <div class="modal-remplacement-body">
+        <p class="modal-info-remplacement">
+          Votre demande de départ est approuvée ! Invitez maintenant l'étudiant vérifié qui prendra votre suite.
+        </p>
+        <p class="modal-info-sub">
+          Cet étudiant recevra l'ensemble des détails du logement (photos, règles, part de loyer, colocataires). Dès qu'il aura cliqué sur « Accepter », votre départ sera immédiatement effectif.
         </p>
 
         <div class="champ-form-modal">
@@ -646,21 +844,44 @@
         <button
           type="button"
           class="btn btn-secondary btn-sm"
-          (click)="fermerDialogRemplacement()"
-          [disabled]="remplacementEnCours"
+          (click)="fermerDialogInviterRemplacant()"
+          [disabled]="invitationRemplacantEnCours"
         >
           Annuler
         </button>
         <button
           type="button"
           class="btn btn-primary btn-sm"
-          (click)="confirmerProposerRemplacant()"
-          [disabled]="remplacementEnCours || !emailRemplacant.trim()"
+          (click)="confirmerInviterRemplacant()"
+          [disabled]="invitationRemplacantEnCours || !emailRemplacant.trim()"
         >
           <app-icon name="check" [size]="14"></app-icon>
-          <span>{{ remplacementEnCours ? 'Transmission en cours...' : 'Envoyer la proposition' }}</span>
+          <span>{{ invitationRemplacantEnCours ? 'Transmission en cours...' : 'Envoyer la proposition au remplaçant' }}</span>
         </button>
       </div>
     </div>
   </div>
+
+  <!-- 6. Dialogue d'acceptation par le remplaçant -->
+  <app-confirm-dialog
+    [ouvert]="dialogAccepterPropositionOuvert"
+    titre="Accepter la proposition de colocation"
+    [message]="'En acceptant cette offre, vous intégrez officiellement la colocation pour une part de loyer de ' + partDeLoyer + ' DT / mois. Le colocataire sortant sera libéré et vous rejoindrez la discussion collective. Confirmer ?'"
+    texteConfirmer="Confirmer & Rejoindre la colocation"
+    texteAnnuler="Annuler"
+    (confirmer)="confirmerAccepterProposition()"
+    (annuler)="annulerAccepterProposition()"
+  ></app-confirm-dialog>
+
+  <!-- 7. Dialogue de refus par le remplaçant -->
+  <app-confirm-dialog
+    [ouvert]="dialogRefuserPropositionOuvert"
+    titre="Refuser la proposition de remplacement"
+    message="Êtes-vous certain de vouloir décliner cette proposition de remplacement ?"
+    texteConfirmer="Décliner l'offre"
+    texteAnnuler="Retour"
+    [dangereux]="true"
+    (confirmer)="confirmerRefuserProposition()"
+    (annuler)="annulerRefuserProposition()"
+  ></app-confirm-dialog>
 </div>

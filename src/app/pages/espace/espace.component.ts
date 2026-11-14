@@ -67,16 +67,26 @@ export class EspaceComponent implements OnInit, OnDestroy {
   emailInvitation: string = '';
   invitationEnCours: boolean = false;
 
-  // États du dialogue de confirmation pour quitter
+  // États du dialogue de confirmation pour quitter (espace non confirmé)
   dialogQuitterOuvert: boolean = false;
   // États du dialogue pour fermer l'espace par le propriétaire
   dialogFermerOuvert: boolean = false;
   // États du dialogue pour confirmer la colocation par un colocataire
   dialogConfirmerColocOuvert: boolean = false;
-  // États du dialogue de remplacement requis en colocation confirmée
-  dialogRemplacementOuvert: boolean = false;
+
+  // États du dialogue de demande de départ auprès du premier locataire (colocation confirmée)
+  dialogDemandeDepartOuvert: boolean = false;
+  motifDemandeDepart: string = '';
+  demandeDepartEnCours: boolean = false;
+
+  // États du dialogue d'invitation d'un remplaçant (une fois la demande acceptée)
+  dialogInviterRemplacantOuvert: boolean = false;
   emailRemplacant: string = '';
-  remplacementEnCours: boolean = false;
+  invitationRemplacantEnCours: boolean = false;
+
+  // États des dialogues pour le candidat remplaçant
+  dialogAccepterPropositionOuvert: boolean = false;
+  dialogRefuserPropositionOuvert: boolean = false;
 
   actionEnCours: boolean = false;
 
@@ -129,14 +139,41 @@ export class EspaceComponent implements OnInit, OnDestroy {
     return this.monMembre?.membre.confirme === true;
   }
 
-  // Indique si le membre connecté a une demande de remplacement en cours
+  // Indique si le membre connecté a une demande de départ
   get aDemandeDepart(): boolean {
     return this.monMembre?.membre.demandeDepart === true;
   }
 
-  // Candidatures de remplacement en attente de décision du premier locataire
-  get candidaturesRemplacement(): MembreDetailItem[] {
-    return this.membresDetails.filter(m => m.membre.statutAdhesion === 'remplacement');
+  // Statut de validation de la demande de départ ('en_attente' | 'accepte' | 'refuse')
+  get statutDepart(): 'en_attente' | 'accepte' | 'refuse' | undefined {
+    return this.monMembre?.membre.statutDepart;
+  }
+
+  // Remplaçant actuellement invité par le membre connecté
+  get remplacantInvite(): MembreDetailItem | undefined {
+    const id = this.monMembre?.membre.remplacantId;
+    return id ? this.membresDetails.find(m => m.membre.etudiantId === id) : undefined;
+  }
+
+  // Demandes de départ en attente de décision du premier locataire
+  get demandesDepartEnAttente(): MembreDetailItem[] {
+    return this.membresDetails.filter(
+      m => m.membre.demandeDepart === true && m.membre.statutDepart === 'en_attente'
+    );
+  }
+
+  // Candidat en remplacement actuellement connecté
+  get estCandidatRemplacement(): boolean {
+    const uid = this.authService.currentUser?.uid;
+    return this.membresDetails.some(
+      m => m.membre.etudiantId === uid && m.membre.statutAdhesion === 'remplacement'
+    );
+  }
+
+  // Colocataire sortant que l'utilisateur connecté remplace (si candidat)
+  get colocataireSortant(): MembreDetailItem | undefined {
+    const id = this.monMembre?.membre.remplaceEtudiantId;
+    return id ? this.membresDetails.find(m => m.membre.etudiantId === id) : undefined;
   }
 
   // Détermine si l'utilisateur actuel est le propriétaire du logement
@@ -251,14 +288,19 @@ export class EspaceComponent implements OnInit, OnDestroy {
       const estInvite = this.membresDetails.some(
         m => m.membre.etudiantId === user.uid && m.membre.statutAdhesion === 'invite'
       );
+      const estRemplacant = this.membresDetails.some(
+        m => m.membre.etudiantId === user.uid && m.membre.statutAdhesion === 'remplacement'
+      );
 
-      if (!estProprio && !estMembre && !estInvite && user.role !== 'admin') {
+      if (!estProprio && !estMembre && !estInvite && !estRemplacant && user.role !== 'admin') {
         this.accesRefuse = true;
         return;
       }
 
-      // Initialisation de l'écoute du chat en temps réel via onSnapshot
-      this.initialiserChat(annonceId);
+      // Initialisation du salon de discussion uniquement pour les membres acceptés, propriétaire ou admin
+      if (estProprio || estMembre || user.role === 'admin') {
+        this.initialiserChat(annonceId);
+      }
     } catch {
       this.erreur = "Erreur lors du chargement de l'espace de colocation.";
     } finally {
@@ -396,64 +438,27 @@ export class EspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 6. Quitter la colocation (départ direct avant confirmation OU proposition de remplaçant si confirmée)
+  // 6. Procédure pour quitter la colocation
   demanderQuitter(): void {
-    if (this.estConfirme) {
-      this.emailRemplacant = '';
-      this.dialogRemplacementOuvert = true;
-    } else {
+    if (!this.estConfirme) {
+      // Colocation non confirmée : n'importe quel colocataire peut quitter directement
       this.dialogQuitterOuvert = true;
+    } else {
+      // Colocation confirmée :
+      // Si aucune demande formulée : ouvrir le formulaire de demande de départ au 1er locataire
+      // Si demande déjà acceptée : ouvrir le dialogue pour inviter un remplaçant
+      if (!this.aDemandeDepart) {
+        this.motifDemandeDepart = '';
+        this.dialogDemandeDepartOuvert = true;
+      } else if (this.statutDepart === 'accepte') {
+        this.emailRemplacant = '';
+        this.dialogInviterRemplacantOuvert = true;
+      }
     }
   }
 
   annulerQuitter(): void {
     this.dialogQuitterOuvert = false;
-  }
-
-  fermerDialogRemplacement(): void {
-    this.dialogRemplacementOuvert = false;
-    this.emailRemplacant = '';
-  }
-
-  async confirmerProposerRemplacant(): Promise<void> {
-    const user = this.authService.currentUser;
-    if (!user || !user.uid) return;
-    const email = this.emailRemplacant.trim();
-    if (!email) {
-      this.toastService.avertissement("Veuillez renseigner l'adresse email du remplaçant.");
-      return;
-    }
-
-    this.remplacementEnCours = true;
-    try {
-      await this.espaceService.proposerRemplacant(this.annonceId, user.uid, email);
-      this.toastService.succes("Invitation transmise à votre remplaçant ! En attente de validation par le premier locataire.");
-      this.fermerDialogRemplacement();
-      await this.rafraichirMembres();
-    } catch (err: any) {
-      this.toastService.erreur(err?.message || "Impossible de désigner ce remplaçant.");
-    } finally {
-      this.remplacementEnCours = false;
-    }
-  }
-
-  async repondreRemplacement(item: MembreDetailItem, decision: 'accepte' | 'refuse'): Promise<void> {
-    this.actionEnCours = true;
-    try {
-      await this.espaceService.validerRemplacement(this.annonceId, item.membre.etudiantId, decision);
-      this.toastService.succes(
-        decision === 'accepte'
-          ? "Remplacement validé avec succès ! Le colocataire sortant a été automatiquement libéré de la colocation."
-          : "Candidature de remplacement refusée."
-      );
-      await this.rafraichirMembres();
-      const esp = await this.espaceService.getEspace(this.annonceId);
-      if (esp) this.espace = esp;
-    } catch (err: any) {
-      this.toastService.erreur(err?.message || "Erreur lors du traitement du remplacement.");
-    } finally {
-      this.actionEnCours = false;
-    }
   }
 
   async confirmerQuitter(): Promise<void> {
@@ -469,6 +474,152 @@ export class EspaceComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       this.toastService.erreur(err?.message || "Impossible de quitter l'espace.");
       this.dialogQuitterOuvert = false;
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // --- Étape 1 : Demande de départ auprès du premier locataire ---
+  fermerDialogDemandeDepart(): void {
+    this.dialogDemandeDepartOuvert = false;
+    this.motifDemandeDepart = '';
+  }
+
+  async confirmerDemandeDepart(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+
+    this.demandeDepartEnCours = true;
+    try {
+      await this.espaceService.demanderDepart(this.annonceId, user.uid, this.motifDemandeDepart);
+      this.toastService.succes("Votre demande de départ a été transmise au premier locataire.");
+      this.fermerDialogDemandeDepart();
+      await this.rafraichirMembres();
+      const esp = await this.espaceService.getEspace(this.annonceId);
+      if (esp) this.espace = esp;
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Impossible de soumettre la demande de départ.");
+    } finally {
+      this.demandeDepartEnCours = false;
+    }
+  }
+
+  // --- Étape 2 : Le premier locataire accepte ou refuse la demande de départ ---
+  async repondreDemandeDepart(item: MembreDetailItem, decision: 'accepte' | 'refuse'): Promise<void> {
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.repondreDemandeDepart(this.annonceId, item.membre.etudiantId, decision);
+      this.toastService.succes(
+        decision === 'accepte'
+          ? "Demande de départ approuvée. Le colocataire est désormais autorisé à inviter un remplaçant."
+          : "Demande de départ refusée."
+      );
+      await this.rafraichirMembres();
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors du traitement de la demande de départ.");
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // --- Étape 3 : Le membre invite un remplaçant ---
+  ouvrirDialogInviterRemplacant(): void {
+    this.emailRemplacant = '';
+    this.dialogInviterRemplacantOuvert = true;
+  }
+
+  fermerDialogInviterRemplacant(): void {
+    this.dialogInviterRemplacantOuvert = false;
+    this.emailRemplacant = '';
+  }
+
+  async confirmerInviterRemplacant(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+    const email = this.emailRemplacant.trim();
+    if (!email) {
+      this.toastService.avertissement("Veuillez renseigner l'adresse email du remplaçant.");
+      return;
+    }
+
+    this.invitationRemplacantEnCours = true;
+    try {
+      await this.espaceService.inviterRemplacant(this.annonceId, user.uid, email);
+      this.toastService.succes("Proposition transmise au remplaçant avec tous les détails du logement ! En attente de sa réponse.");
+      this.fermerDialogInviterRemplacant();
+      await this.rafraichirMembres();
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Impossible d'inviter ce remplaçant.");
+    } finally {
+      this.invitationRemplacantEnCours = false;
+    }
+  }
+
+  async annulerRemplacant(candidateId: string): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.annulerInvitationRemplacant(this.annonceId, user.uid, candidateId);
+      this.toastService.succes("Invitation de remplacement annulée.");
+      await this.rafraichirMembres();
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors de l'annulation.");
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // --- Étape 4 : Le remplaçant consulte tous les détails et accepte ou refuse ---
+  demanderAccepterProposition(): void {
+    this.dialogAccepterPropositionOuvert = true;
+  }
+
+  annulerAccepterProposition(): void {
+    this.dialogAccepterPropositionOuvert = false;
+  }
+
+  async confirmerAccepterProposition(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.repondrePropositionRemplacement(this.annonceId, user.uid, 'accepte');
+      this.toastService.succes("Félicitations ! Vous avez accepté la proposition et intégrez la colocation.");
+      this.dialogAccepterPropositionOuvert = false;
+      await this.rafraichirMembres();
+      const esp = await this.espaceService.getEspace(this.annonceId);
+      if (esp) this.espace = esp;
+      this.initialiserChat(this.annonceId);
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors de l'acceptation de la proposition.");
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  demanderRefuserProposition(): void {
+    this.dialogRefuserPropositionOuvert = true;
+  }
+
+  annulerRefuserProposition(): void {
+    this.dialogRefuserPropositionOuvert = false;
+  }
+
+  async confirmerRefuserProposition(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.repondrePropositionRemplacement(this.annonceId, user.uid, 'refuse');
+      this.toastService.succes("Vous avez décliné la proposition de remplacement.");
+      this.dialogRefuserPropositionOuvert = false;
+      this.router.navigate(['/annonces']);
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors du refus de la proposition.");
     } finally {
       this.actionEnCours = false;
     }

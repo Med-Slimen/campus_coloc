@@ -29,8 +29,11 @@ export interface Membre {
   confirme?: boolean; // Confirmation individuelle de la colocation
   dateConfirmation?: string; // ISO string
   remplaceEtudiantId?: string; // ID de l'étudiant qu'il remplace dans la colocation confirmée
-  demandeDepart?: boolean; // Vrai si le membre a initié un départ avec remplaçant
-  remplacantId?: string; // ID de l'étudiant proposé en remplacement
+  demandeDepart?: boolean; // Vrai si le membre a initié un départ
+  statutDepart?: 'en_attente' | 'accepte' | 'refuse'; // Statut de validation par le premier locataire
+  motifDepart?: string; // Motif formulé par le membre
+  dateDemandeDepart?: string; // ISO string de la demande
+  remplacantId?: string; // ID de l'étudiant proposé / invité en remplacement
 }
 
 // Alias pour compatibilité

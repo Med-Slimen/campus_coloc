@@ -166,10 +166,12 @@ service cloud.firestore {
     // =========================================================================
     // 5. ESPACES DE COLOCATION, MEMBRES ET MESSAGES
     // =========================================================================
-    // - Consultation réservée au propriétaire du logement et aux membres acceptés.
+    // - Consultation réservée au propriétaire du logement, aux membres acceptés,
+    //   ainsi qu'aux étudiants invités ou sollicités pour un remplacement.
     // - Espace public ouvert : consultation autorisée pour lister les logements avec colocation active.
     match /espaces/{annonceId} {
       allow read: if isAcceptedMembre(annonceId) ||
+        (isSignedIn() && exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid))) ||
         (resource.data.visibilite == 'public' && resource.data.statut == 'ouvert') ||
         (isSignedIn() && resource.data.proprietaireId == request.auth.uid) ||
         isAdmin();
@@ -177,15 +179,24 @@ service cloud.firestore {
       // Création lors de l'acceptation de la première demande par le propriétaire ou l'administrateur
       allow create: if isSignedIn() && (request.resource.data.proprietaireId == request.auth.uid || isAdmin());
 
-      // Modification des règles, visibilité, statut (complet, confirmé, fermé) par propriétaire ou colocataires acceptés
-      allow update: if isAcceptedMembre(annonceId) || isEspaceOwner(annonceId) || isAdmin();
+      // Modification des règles, visibilité, statut (complet, confirmé, fermé) par propriétaire, colocataires acceptés ou lors d'un remplacement
+      allow update: if isAcceptedMembre(annonceId) ||
+        isEspaceOwner(annonceId) ||
+        (isSignedIn() && exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)).data.statutAdhesion == 'remplacement') ||
+        isAdmin();
 
       allow delete: if isAdmin();
 
       // --- Sous-collection membres ---
       match /membres/{etudiantId} {
-        // Chaque membre peut lire son statut ; les membres acceptés et le bailleur lisent la liste des colocataires
-        allow read: if isSignedIn() && (request.auth.uid == etudiantId || isAcceptedMembre(annonceId));
+        // Chaque membre peut lire son statut ; les membres acceptés, bailleurs et candidats en remplacement lisent la liste des colocataires
+        allow read: if isSignedIn() && (
+          request.auth.uid == etudiantId ||
+          isAcceptedMembre(annonceId) ||
+          (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)).data.statutAdhesion in ['invite', 'remplacement'])
+        );
 
         // Inscription ou premier membre créé par le propriétaire, invitation par un colocataire ou le 1er locataire, ou demande d'adhésion
         allow create: if isSignedIn() && (
@@ -195,12 +206,14 @@ service cloud.firestore {
           isAdmin()
         );
 
-        // Décision du premier locataire, confirmation individuelle par le colocataire, départ ou remplacement
+        // Décision du premier locataire, confirmation individuelle, départ ou remplacement automatisé
         allow update: if isSignedIn() && (
           request.auth.uid == etudiantId ||
           isPremierLocataire(annonceId) ||
           isEspaceOwner(annonceId) ||
           isAcceptedMembre(annonceId) ||
+          (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)).data.remplaceEtudiantId == etudiantId) ||
           isAdmin()
         );
 
