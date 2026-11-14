@@ -202,6 +202,19 @@
           <app-icon name="close" [size]="14"></app-icon>
           <span>Fermer la colocation</span>
         </button>
+
+        <!-- Action Colocataire : Quitter la colocation -->
+        <button
+          *ngIf="estMembreAccepte && !estProprietaire && espace.statut !== 'ferme'"
+          type="button"
+          class="btn btn-outline-danger btn-sm btn-quitter-coloc-header"
+          (click)="demanderQuitter()"
+          [disabled]="actionEnCours"
+          [title]="estConfirme ? 'Demander à quitter la colocation' : 'Quitter la colocation'"
+        >
+          <app-icon [name]="estConfirme ? 'users' : 'log-out'" [size]="14"></app-icon>
+          <span>{{ estConfirme ? 'Demander à quitter' : 'Quitter la colocation' }}</span>
+        </button>
       </div>
     </header>
 
@@ -415,6 +428,19 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Action Quitter la colocation pour les colocataires -->
+          <div *ngIf="estMembreAccepte && !estProprietaire && espace.statut !== 'ferme'" class="pied-colocs-action">
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm w-full btn-quitter-coloc-card"
+              (click)="demanderQuitter()"
+              [disabled]="actionEnCours"
+            >
+              <app-icon [name]="estConfirme ? 'users' : 'log-out'" [size]="14"></app-icon>
+              <span>{{ estConfirme ? 'Demander à quitter cette colocation' : 'Quitter cette colocation' }}</span>
+            </button>
           </div>
         </div>
 
@@ -645,10 +671,10 @@
         </div>
 
         <!-- 6. Bouton Quitter la colocation (pour les colocataires membres) -->
-        <div *ngIf="estMembreAccepte && !estProprietaire && !aDemandeDepart" class="zone-quitter-coloc">
+        <div *ngIf="estMembreAccepte && !estProprietaire && !aDemandeDepart && espace.statut !== 'ferme'" class="zone-quitter-coloc">
           <button
             type="button"
-            class="btn btn-danger btn-sm w-full"
+            class="btn btn-danger btn-sm w-full btn-quitter-bas"
             (click)="demanderQuitter()"
             [disabled]="actionEnCours"
           >

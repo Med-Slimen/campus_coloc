@@ -133,12 +133,22 @@ export class EspaceService {
 
     const annonce = annonceSnap.data() as Annonce;
     const membres = await this.getMembres(annonceId);
-    const nbAcceptes = membres.filter(m => m.statutAdhesion === 'accepte').length;
+    // Filtrage strict : seuls les étudiants acceptés sont comptabilisés (le propriétaire n'est JAMAIS compté)
+    const nbAcceptes = membres.filter(
+      m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
+    ).length;
+    const capaciteMax = Number(annonce.nombrePlaces) || 1;
+
+    // Rétablissement automatique si l'espace était marqué 'complet' alors que des places sont libres
+    if (nbAcceptes < capaciteMax && espace.statut === 'complet') {
+      await updateDoc(doc(db, 'espaces', annonceId), { statut: 'ouvert' });
+      espace.statut = 'ouvert';
+    }
 
     // Règle 5 : vérification stricte de la capacité avant toute invitation
-    if (nbAcceptes >= (annonce.nombrePlaces || 1) || espace.statut === 'complet') {
+    if (nbAcceptes >= capaciteMax) {
       throw new Error(
-        `Capacité maximale atteinte (${annonce.nombrePlaces} places). Impossible d'inviter de nouveaux colocataires.`
+        `Capacité maximale atteinte (${capaciteMax} colocataires). Impossible d'inviter de nouveaux colocataires.`
       );
     }
 
@@ -156,6 +166,10 @@ export class EspaceService {
     const etudiantDoc = userSnap.docs[0];
     const etudiant = etudiantDoc.data() as User;
     const etudiantId = etudiantDoc.id;
+
+    if (etudiantId === espace.proprietaireId) {
+      throw new Error("Le propriétaire du logement ne peut pas être ajouté comme colocataire.");
+    }
 
     if (etudiant.role !== 'etudiant') {
       throw new Error("L'adresse saisie ne correspond pas à un compte étudiant.");
@@ -210,9 +224,19 @@ export class EspaceService {
 
     const annonce = annonceSnap.data() as Annonce;
     const membres = await this.getMembres(annonceId);
-    const nbAcceptes = membres.filter(m => m.statutAdhesion === 'accepte').length;
+    // Filtrage strict : seuls les étudiants acceptés comptent (le propriétaire n'est jamais compté)
+    const nbAcceptes = membres.filter(
+      m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
+    ).length;
+    const capaciteMax = Number(annonce.nombrePlaces) || 1;
 
-    if (nbAcceptes >= (annonce.nombrePlaces || 1) || espace.statut === 'complet') {
+    // Rétablissement automatique si l'espace était marqué 'complet'
+    if (nbAcceptes < capaciteMax && espace.statut === 'complet') {
+      await updateDoc(doc(db, 'espaces', annonceId), { statut: 'ouvert' });
+      espace.statut = 'ouvert';
+    }
+
+    if (nbAcceptes >= capaciteMax) {
       throw new Error("Le logement a atteint sa capacité maximale de colocataires.");
     }
 
@@ -251,27 +275,35 @@ export class EspaceService {
     const membreRef = doc(db, 'espaces', annonceId, 'membres', etudiantId);
     const espaceRef = doc(db, 'espaces', annonceId);
 
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace de colocation introuvable.");
+
+    const annonce = annonceSnap.exists() ? (annonceSnap.data() as Annonce) : ({} as Annonce);
+    const capaciteMax = Number(annonce.nombrePlaces) || 1;
+    // Filtrage strict : seuls les étudiants acceptés sont comptabilisés (le propriétaire n'est JAMAIS compté)
+    const nbAcceptes = membres.filter(
+      m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
+    ).length;
+
     if (action === 'accepte') {
-      // Vérification de la capacité avant acceptation
-      const [annonceSnap, membres] = await Promise.all([
-        getDoc(doc(db, 'annonces', annonceId)),
-        this.getMembres(annonceId)
-      ]);
-
-      const annonce = annonceSnap.data() as Annonce;
-      const nbAcceptes = membres.filter(m => m.statutAdhesion === 'accepte').length;
-
-      if (nbAcceptes >= (annonce.nombrePlaces || 1)) {
+      if (nbAcceptes >= capaciteMax) {
         throw new Error(
-          `Impossible d'accepter : la capacité maximale (${annonce.nombrePlaces} places) est atteinte.`
+          `Impossible d'accepter : la capacité maximale (${capaciteMax} colocataire${capaciteMax > 1 ? 's' : ''}) est déjà atteinte.`
         );
       }
 
       await updateDoc(membreRef, { statutAdhesion: 'accepte' });
 
       // Si cette acceptation atteint le nombre total de places, basculer le statut en 'complet'
-      if (nbAcceptes + 1 >= (annonce.nombrePlaces || 1)) {
+      if (nbAcceptes + 1 >= capaciteMax) {
         await updateDoc(espaceRef, { statut: 'complet' });
+      } else if (espace.statut === 'complet') {
+        await updateDoc(espaceRef, { statut: 'ouvert' });
       }
 
       // Notification à l'étudiant accepté
@@ -286,6 +318,11 @@ export class EspaceService {
       });
     } else {
       await updateDoc(membreRef, { statutAdhesion: 'refuse' });
+
+      // Si l'espace était complet et qu'une place reste disponible, repasser en ouvert
+      if (espace.statut === 'complet' && nbAcceptes < capaciteMax) {
+        await updateDoc(espaceRef, { statut: 'ouvert' });
+      }
 
       // Notification à l'étudiant refusé
       await this.notificationService.create({
@@ -397,7 +434,9 @@ export class EspaceService {
 
     // Notifier tous les membres acceptés
     const titre = annonceSnap.exists() ? (annonceSnap.data() as Annonce).titre : 'le logement';
-    const acceptes = membres.filter(m => m.statutAdhesion === 'accepte');
+    const acceptes = membres.filter(
+      m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
+    );
     const maintenant = new Date().toISOString();
 
     for (const m of acceptes) {
@@ -691,7 +730,12 @@ export class EspaceService {
     }
 
     const demandeur = membres.find(m => m.etudiantId === demandeurId);
-    if (!demandeur || !demandeur.demandeDepart || demandeur.statutDepart !== 'accepte') {
+    if (!demandeur) {
+      throw new Error("Colocataire introuvable dans cet espace.");
+    }
+
+    const estPremier = espace.premierLocataireId === demandeurId;
+    if (!estPremier && (!demandeur.demandeDepart || demandeur.statutDepart !== 'accepte')) {
       throw new Error("Votre demande de départ doit d'abord être acceptée par le premier locataire.");
     }
 
@@ -732,7 +776,9 @@ export class EspaceService {
     // 1. Mettre à jour le membre demandeur
     const demandeurRef = doc(db, 'espaces', annonceId, 'membres', demandeurId);
     batch.update(demandeurRef, {
-      remplacantId: remplacantId
+      remplacantId: remplacantId,
+      demandeDepart: true,
+      statutDepart: 'accepte'
     });
 
     // 2. Créer l'invitation de remplacement
@@ -753,7 +799,10 @@ export class EspaceService {
     const titre = annonce?.titre || 'la colocation';
     const loyer = annonce?.loyer || 0;
     const charges = annonce?.charges || 0;
-    const nbOccupants = Math.max(1, membres.filter(m => m.statutAdhesion === 'accepte').length);
+    const nbOccupants = Math.max(
+      1,
+      membres.filter(m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId).length
+    );
     const part = Math.round((loyer + charges) / nbOccupants);
 
     await this.notificationService.create({
@@ -830,7 +879,10 @@ export class EspaceService {
 
       // 3. Si le demandeur sortant était le premier locataire : désigner un successeur
       if (espace.premierLocataireId === demandeurId) {
-        const autres = membres.filter(m => m.statutAdhesion === 'accepte' && m.etudiantId !== demandeurId);
+        const autres = membres.filter(
+          m => m.statutAdhesion === 'accepte' && m.etudiantId !== demandeurId && m.etudiantId !== espace.proprietaireId
+        );
+        autres.sort((a, b) => (a.dateAdhesion || '').localeCompare(b.dateAdhesion || ''));
         const nouveauPremierId = autres.length > 0 ? autres[0].etudiantId : remplacantId;
 
         const newPremierRef = doc(db, 'espaces', annonceId, 'membres', nouveauPremierId);
@@ -923,7 +975,9 @@ export class EspaceService {
       throw new Error("Cette colocation est officiellement confirmée. Pour la quitter, vous devez faire une demande de départ auprès du premier locataire et trouver un remplaçant.");
     }
 
-    const acceptes = membres.filter(m => m.statutAdhesion === 'accepte');
+    const acceptes = membres.filter(
+      m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
+    );
     const estPremier = espace.premierLocataireId === etudiantId;
     const maintenant = new Date().toISOString();
     const titre = annonceSnap.exists() ? (annonceSnap.data() as Annonce).titre : 'le logement';

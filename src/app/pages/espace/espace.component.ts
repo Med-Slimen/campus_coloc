@@ -207,9 +207,11 @@ export class EspaceComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Membres acceptés
+  // Membres acceptés (excluant strictement le propriétaire bailleur)
   get membresAcceptes(): MembreDetailItem[] {
-    return this.membresDetails.filter(m => m.membre.statutAdhesion === 'accepte');
+    return this.membresDetails.filter(
+      m => m.membre.statutAdhesion === 'accepte' && m.membre.etudiantId !== this.espace?.proprietaireId
+    );
   }
 
   // Candidatures ou invitations en attente
@@ -311,7 +313,8 @@ export class EspaceComponent implements OnInit, OnDestroy {
   // Rafraîchit les informations détaillées des membres
   async rafraichirMembres(): Promise<void> {
     const membresBruts = await this.espaceService.getMembres(this.annonceId);
-    const promesses = membresBruts.map(async (m): Promise<MembreDetailItem> => {
+    const membresFiltres = membresBruts.filter(m => m.etudiantId !== this.espace?.proprietaireId);
+    const promesses = membresFiltres.map(async (m): Promise<MembreDetailItem> => {
       const user = await this.userService.getUser(m.etudiantId).catch(() => null);
       return { membre: m, user };
     });
@@ -445,14 +448,25 @@ export class EspaceComponent implements OnInit, OnDestroy {
       this.dialogQuitterOuvert = true;
     } else {
       // Colocation confirmée :
-      // Si aucune demande formulée : ouvrir le formulaire de demande de départ au 1er locataire
-      // Si demande déjà acceptée : ouvrir le dialogue pour inviter un remplaçant
-      if (!this.aDemandeDepart) {
+      // - Si le premier locataire : il peut directement inviter un remplaçant certifié
+      // - Si un colocataire ordinaire :
+      //    * S'il n'a pas encore fait de demande ou si refusée : formulaire de demande de départ
+      //    * Si sa demande a été acceptée : formulaire pour inviter le remplaçant
+      //    * Si sa demande est en attente : notification d'information
+      if (this.estPremierLocataire) {
+        this.emailRemplacant = '';
+        this.dialogInviterRemplacantOuvert = true;
+      } else if (!this.aDemandeDepart) {
         this.motifDemandeDepart = '';
         this.dialogDemandeDepartOuvert = true;
       } else if (this.statutDepart === 'accepte') {
         this.emailRemplacant = '';
         this.dialogInviterRemplacantOuvert = true;
+      } else if (this.statutDepart === 'en_attente') {
+        this.toastService.info("Votre demande de départ est actuellement en attente d'approbation par le premier locataire.");
+      } else if (this.statutDepart === 'refuse') {
+        this.motifDemandeDepart = '';
+        this.dialogDemandeDepartOuvert = true;
       }
     }
   }
