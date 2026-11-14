@@ -50,7 +50,7 @@ service cloud.firestore {
     function isAcceptedMembre(annonceId) {
       return isSignedIn() && (
         (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/espaces/$(annonceId)).data.statutAdhesion == 'accepte') ||
+         get(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)).data.statutAdhesion == 'accepte') ||
         isEspaceOwner(annonceId) ||
         isAdmin()
       );
@@ -59,8 +59,10 @@ service cloud.firestore {
     // 8. Vérifie si l'utilisateur connecté est le premier locataire de l'espace
     function isPremierLocataire(annonceId) {
       return isSignedIn() && (
+        (exists(/databases/$(database)/documents/espaces/$(annonceId)) &&
+         get(/databases/$(database)/documents/espaces/$(annonceId)).data.premierLocataireId == request.auth.uid) ||
         (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/espaces/$(annonceId)).data.premierLocataire == true) ||
+         get(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)).data.premierLocataire == true) ||
         isAdmin()
       );
     }
@@ -167,6 +169,7 @@ service cloud.firestore {
     // - Espace public ouvert : consultation autorisée pour lister les logements avec colocation active.
     match /espaces/{annonceId} {
       allow read: if (resource.data.visibilite == 'public' && resource.data.statut == 'ouvert') ||
+        (isSignedIn() && resource.data.proprietaireId == request.auth.uid) ||
         isAcceptedMembre(annonceId);
 
       // Création lors de l'acceptation de la première demande par le propriétaire ou l'administrateur

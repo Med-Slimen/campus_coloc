@@ -428,6 +428,68 @@
   margin-bottom: 10px;
 }
 
+/* Encart d'accès direct à l'espace de colocation (colocataire ou bailleur) */
+.encart-espace-acces {
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.encart-coloc-actif {
+  background-color: #EFF6FF;
+  border-left: 4px solid var(--blue);
+}
+
+.encart-bailleur-actif {
+  background-color: #F0FDF4;
+  border-left: 4px solid var(--ok);
+}
+
+.encart-mon-annonce-info {
+  background-color: #F8F4EC;
+  border: 1px dashed rgba(23, 32, 42, 0.25);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.texte-mon-bien {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.entete-espace-acces {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desc-espace-acces {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.bouton-espace-detail {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 2px 2px 0 #17202A;
+}
+
 .entete-coloc-ouverte {
   display: flex;
   align-items: center;

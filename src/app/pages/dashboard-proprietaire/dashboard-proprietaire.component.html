@@ -259,6 +259,15 @@
               <td class="col-actions">
                 <div class="actions-ligne">
                   <a
+                    *ngIf="a.id && aEspace(a.id)"
+                    [routerLink]="['/espace', a.id]"
+                    class="btn btn-primary btn-sm btn-action-tab btn-coloc-espace"
+                    title="Accéder à l'espace de colocation"
+                  >
+                    <app-icon name="users" [size]="14"></app-icon>
+                    <span>Espace</span>
+                  </a>
+                  <a
                     [routerLink]="['/mes-annonces/modifier', a.id]"
                     class="btn btn-ghost btn-sm btn-action-tab"
                     title="Modifier l'annonce"
@@ -280,6 +289,40 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- 4. Section : Vos colocations actives -->
+    <div class="card bloc-tableau-annonces bloc-espaces-actifs" *ngIf="espaces.length > 0">
+      <div class="entete-tableau">
+        <div>
+          <span class="tag-label">ESPACES DE COLOCATION</span>
+          <h2 class="titre-bloc">Vos colocations actives ({{ espaces.length }})</h2>
+        </div>
+      </div>
+
+      <div class="grille-espaces-bailleur">
+        <div *ngFor="let item of espacesAvecAnnonce" class="carte-espace-bailleur card">
+          <div class="corps-espace-bailleur">
+            <span class="tag-label">{{ item.annonce?.ville || 'TUNISIE' | uppercase }}</span>
+            <h3 class="titre-espace-logement">{{ item.annonce?.titre || 'Logement de colocation' }}</h3>
+            <div class="tags-espace-ligne">
+              <span class="badge badge-sm" [ngClass]="item.espace.visibilite === 'public' ? 'badge-sun' : 'badge-neutral'">
+                {{ item.espace.visibilite === 'public' ? 'Visibilité Publique' : 'Visibilité Privée' }}
+              </span>
+              <span class="badge badge-sm" [ngClass]="item.espace.statut === 'complet' ? 'badge-warn' : 'badge-ok'">
+                {{ item.espace.statut === 'complet' ? 'Complet' : 'Ouvert aux candidatures' }}
+              </span>
+            </div>
+          </div>
+          <a
+            [routerLink]="['/espace', item.espace.annonceId || item.espace.id]"
+            class="btn btn-primary btn-sm btn-rejoindre-espace"
+          >
+            <app-icon name="users" [size]="14"></app-icon>
+            <span>Accéder à l'espace de colocation</span>
+          </a>
+        </div>
       </div>
     </div>
   </ng-container>

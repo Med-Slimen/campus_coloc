@@ -8,6 +8,7 @@ import { LoaderComponent } from '../../components/loader/loader.component';
 import { ErrorMessageComponent } from '../../components/error-message/error-message.component';
 import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 import { AnnonceService } from '../../services/annonce.service';
+import { EspaceService } from '../../services/espace.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { Annonce } from '../../models';
@@ -30,12 +31,16 @@ import { Annonce } from '../../models';
 })
 export class MesAnnoncesComponent implements OnInit {
   private annonceService = inject(AnnonceService);
+  private espaceService = inject(EspaceService);
   public authService = inject(AuthService);
   private toastService = inject(ToastService);
   public router = inject(Router);
 
   // Liste des annonces du propriétaire
   annonces: Annonce[] = [];
+
+  // Identifiants des annonces disposant d'un espace de colocation actif
+  espacesAnnoncesIds: Set<string> = new Set();
 
   // États du chargement et des erreurs
   chargement: boolean = true;
@@ -57,7 +62,7 @@ export class MesAnnoncesComponent implements OnInit {
     await this.chargerMesAnnonces();
   }
 
-  // Charge l'ensemble des annonces appartenant à l'utilisateur connecté
+  // Charge l'ensemble des annonces appartenant à l'utilisateur connecté ainsi que ses espaces
   async chargerMesAnnonces(): Promise<void> {
     const user = this.authService.currentUser;
     if (!user || !user.uid) {
@@ -69,12 +74,22 @@ export class MesAnnoncesComponent implements OnInit {
     this.erreur = null;
 
     try {
-      this.annonces = await this.annonceService.getByProprietaire(user.uid);
+      const [annonces, espaces] = await Promise.all([
+        this.annonceService.getByProprietaire(user.uid),
+        this.espaceService.getEspacesByProprietaire(user.uid).catch(() => [])
+      ]);
+      this.annonces = annonces;
+      this.espacesAnnoncesIds = new Set(espaces.map(e => e.annonceId || e.id || ''));
     } catch {
       this.erreur = "Impossible de récupérer vos annonces. Veuillez vérifier votre connexion.";
     } finally {
       this.chargement = false;
     }
+  }
+
+  // Vérifie si une annonce possède un espace de colocation actif
+  aEspace(annonceId?: string): boolean {
+    return !!annonceId && this.espacesAnnoncesIds.has(annonceId);
   }
 
   // Calcule le budget estimé par colocataire en dinars tunisiens

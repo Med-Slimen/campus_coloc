@@ -78,8 +78,19 @@
           <p class="texte-message">« {{ item.demande.message }} »</p>
         </div>
 
-        <!-- Pied de la carte : Bouton Annuler uniquement si en_attente -->
+        <!-- Pied de la carte : Bouton Annuler si en_attente OU Accès Espace si acceptée -->
         <div class="pied-demande-etudiant">
+          <!-- Si la demande est acceptée : Bouton pour accéder directement à l'espace -->
+          <a
+            *ngIf="item.demande.statut === 'acceptee'"
+            [routerLink]="['/espace', item.demande.annonceId]"
+            class="btn btn-primary btn-sm btn-espace-demande"
+            title="Accéder au salon et aux détails de la colocation"
+          >
+            <app-icon name="users" [size]="14"></app-icon>
+            <span>Accéder à l'espace de colocation</span>
+          </a>
+
           <button
             *ngIf="item.demande.statut === 'en_attente'"
             type="button"
@@ -196,7 +207,7 @@
           </p>
         </div>
 
-        <!-- Actions : Boutons Accepter et Refuser tant que la demande est en_attente -->
+        <!-- Actions : Boutons Accepter et Refuser tant que la demande est en_attente OU Bouton Espace si acceptée -->
         <div class="pied-demande-proprietaire">
           <div class="actions-decision" *ngIf="item.demande.statut === 'en_attente'">
             <button
@@ -220,9 +231,21 @@
             </button>
           </div>
 
-          <!-- Message si déjà traitée -->
-          <span *ngIf="item.demande.statut !== 'en_attente'" class="statut-decision-note">
-            Candidature traitée ({{ item.demande.statut }})
+          <!-- Si acceptée : lien d'accès direct à l'espace de colocation -->
+          <div class="actions-espace-accepte" *ngIf="item.demande.statut === 'acceptee'">
+            <a
+              [routerLink]="['/espace', item.demande.annonceId]"
+              class="btn btn-primary btn-sm btn-espace-demande"
+              title="Accéder à l'espace de colocation"
+            >
+              <app-icon name="users" [size]="14"></app-icon>
+              <span>Accéder à l'espace de colocation</span>
+            </a>
+          </div>
+
+          <!-- Message si déjà traitée hors acceptée (refusée ou annulée) -->
+          <span *ngIf="item.demande.statut === 'refusee' || item.demande.statut === 'annulee'" class="statut-decision-note">
+            Candidature traitée ({{ item.demande.statut === 'refusee' ? 'Refusée' : 'Annulée' }})
           </span>
         </div>
       </div>

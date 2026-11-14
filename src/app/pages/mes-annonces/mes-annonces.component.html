@@ -116,6 +116,10 @@
         </div>
 
         <div class="caracteristiques-courtes">
+          <span class="pastille-info pastille-coloc-active" *ngIf="a.id && aEspace(a.id)">
+            <app-icon name="users" [size]="13"></app-icon>
+            <strong>Colocation active</strong>
+          </span>
           <span class="pastille-info">
             <app-icon name="users" [size]="13"></app-icon>
             {{ a.nombrePlaces }} place{{ (a.nombrePlaces || 1) > 1 ? 's' : '' }}
@@ -140,6 +144,17 @@
 
         <!-- Actions sur l'annonce -->
         <div class="barre-actions">
+          <!-- Bouton direct vers l'espace de colocation -->
+          <a
+            *ngIf="a.id && aEspace(a.id)"
+            [routerLink]="['/espace', a.id]"
+            class="btn btn-primary btn-sm btn-espace-card"
+            title="Accéder à l'espace de colocation de ce logement"
+          >
+            <app-icon name="users" [size]="14"></app-icon>
+            <span>Espace colocation</span>
+          </a>
+
           <a
             [routerLink]="['/mes-annonces/modifier', a.id]"
             class="btn btn-secondary btn-sm"

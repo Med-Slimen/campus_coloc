@@ -8,7 +8,13 @@ import { ErrorMessageComponent } from '../../components/error-message/error-mess
 import { AuthService } from '../../services/auth.service';
 import { AnnonceService } from '../../services/annonce.service';
 import { DemandeService } from '../../services/demande.service';
-import { Annonce, Demande, StatutVerification } from '../../models';
+import { EspaceService } from '../../services/espace.service';
+import { Annonce, Demande, StatutVerification, Espace } from '../../models';
+
+export interface EspaceItemProprietaire {
+  espace: Espace;
+  annonce: Annonce | null;
+}
 
 @Component({
   selector: 'app-dashboard-proprietaire',
@@ -28,11 +34,15 @@ export class DashboardProprietaireComponent implements OnInit {
   public authService = inject(AuthService);
   private annonceService = inject(AnnonceService);
   private demandeService = inject(DemandeService);
+  private espaceService = inject(EspaceService);
   private router = inject(Router);
 
   // Données des annonces du bailleur
   annonces: Annonce[] = [];
   demandesRecues: Demande[] = [];
+  espaces: Espace[] = [];
+  espacesAnnoncesIds: Set<string> = new Set();
+  espacesAvecAnnonce: EspaceItemProprietaire[] = [];
 
   // États du chargement
   chargement: boolean = true;
@@ -97,18 +107,32 @@ export class DashboardProprietaireComponent implements OnInit {
     this.erreur = null;
 
     try {
-      const [annonces, demandes] = await Promise.all([
+      const [annonces, demandes, espaces] = await Promise.all([
         this.annonceService.getByProprietaire(user.uid),
-        this.demandeService.getByProprietaire(user.uid)
+        this.demandeService.getByProprietaire(user.uid),
+        this.espaceService.getEspacesByProprietaire(user.uid).catch(() => [])
       ]);
 
       this.annonces = annonces;
       this.demandesRecues = demandes;
+      this.espaces = espaces;
+      this.espacesAnnoncesIds = new Set(espaces.map(e => e.annonceId || e.id || ''));
+
+      // Associer chaque espace à son annonce
+      this.espacesAvecAnnonce = espaces.map(esp => ({
+        espace: esp,
+        annonce: annonces.find(a => a.id === (esp.annonceId || esp.id)) || null
+      }));
     } catch (err: any) {
       this.erreur = err?.message || 'Erreur lors du chargement de votre tableau de bord.';
     } finally {
       this.chargement = false;
     }
+  }
+
+  // Vérifie si une annonce dispose d'un espace de colocation actif
+  aEspace(annonceId?: string): boolean {
+    return !!annonceId && this.espacesAnnoncesIds.has(annonceId);
   }
 
   // Navigation vers la création d'annonce si le bailleur est vérifié

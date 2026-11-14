@@ -148,6 +148,30 @@
   border-color: var(--danger);
 }
 
+.btn-espace-demande {
+  background-color: var(--blue);
+  color: #FFFFFF;
+  border: var(--border-main);
+  box-shadow: 2px 2px 0 #17202A;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.btn-espace-demande:hover {
+  background-color: var(--blue-dark);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #17202A;
+}
+
+.actions-espace-accepte {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* 2. Carte demande pour le propriétaire */
 .carte-demande-proprietaire {
   background-color: var(--card);

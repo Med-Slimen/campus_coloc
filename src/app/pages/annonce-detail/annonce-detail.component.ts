@@ -57,10 +57,22 @@ export class AnnonceDetailComponent implements OnInit {
   // Espace de colocation
   hasEspace: boolean = false;
   espacePublicOuvert: boolean = false;
+  estColocataireAccepte: boolean = false;
 
   // Demande existante de l'étudiant connecté
   demandeExistante: Demande | null = null;
   aDemandeAdhesion: boolean = false;
+
+  // Détermine si l'étudiant est colocataire accepté (soit membre accepté, soit demande acceptée)
+  get estColocataire(): boolean {
+    return this.estColocataireAccepte || this.demandeExistante?.statut === 'acceptee';
+  }
+
+  // Détermine si l'utilisateur connecté est le propriétaire de cette annonce
+  get estMonAnnonce(): boolean {
+    const uid = this.authService.currentUser?.uid;
+    return !!(uid && this.annonce && this.annonce.proprietaireId === uid);
+  }
 
   // Modale de demande d'intérêt
   dialogInteresseOuvert: boolean = false;
@@ -166,15 +178,20 @@ export class AnnonceDetailComponent implements OnInit {
         );
 
         if (this.hasEspace && this.authService.currentUser?.uid) {
+          const uid = this.authService.currentUser.uid;
           const membres = await this.espaceService.getMembres(id).catch(() => []);
           this.aDemandeAdhesion = membres.some(
-            m => m.etudiantId === this.authService.currentUser?.uid &&
-                 (m.statutAdhesion === 'demande' || m.statutAdhesion === 'accepte')
+            m => m.etudiantId === uid && m.statutAdhesion === 'demande'
+          );
+          this.estColocataireAccepte = (
+            espace?.premierLocataireId === uid ||
+            membres.some(m => m.etudiantId === uid && m.statutAdhesion === 'accepte')
           );
         }
       } catch {
         this.hasEspace = false;
         this.espacePublicOuvert = false;
+        this.estColocataireAccepte = false;
       }
 
       // Vérification si l'étudiant connecté a déjà transmis une demande

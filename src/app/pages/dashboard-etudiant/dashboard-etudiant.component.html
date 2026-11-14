@@ -173,6 +173,52 @@
       </form>
     </div>
 
+    <!-- 3. bis : Section Mes colocations actives -->
+    <div class="section-annonces-dashboard bloc-colocations-actives" *ngIf="colocationsAvecAnnonce.length > 0">
+      <div class="entete-section-dashboard">
+        <div>
+          <span class="tag-label">ESPACES PARTAGÉS</span>
+          <h2 class="titre-section">Mes colocations actives ({{ colocationsAvecAnnonce.length }})</h2>
+        </div>
+      </div>
+
+      <div class="grille-colocs-etudiant">
+        <div *ngFor="let item of colocationsAvecAnnonce" class="carte-coloc-etudiant card">
+          <div class="visuel-coloc-etudiant">
+            <img
+              *ngIf="item.annonce?.photos && item.annonce!.photos.length > 0"
+              [src]="item.annonce!.photos[0]"
+              [alt]="item.annonce?.titre"
+              class="photo-coloc-etudiant"
+            />
+            <div *ngIf="!item.annonce?.photos || item.annonce!.photos.length === 0" class="vide-coloc-etudiant">
+              <app-icon name="home" [size]="28"></app-icon>
+            </div>
+            <span class="badge-overlay-statut badge" [ngClass]="item.espace.statut === 'complet' ? 'badge-neutral' : 'badge-ok'">
+              {{ item.espace.statut === 'complet' ? 'Complète' : 'Active' }}
+            </span>
+          </div>
+
+          <div class="infos-coloc-etudiant">
+            <span class="tag-label" *ngIf="item.annonce?.ville">{{ item.annonce?.ville | uppercase }}</span>
+            <h3 class="titre-coloc-etudiant">{{ item.annonce?.titre || 'Espace de colocation' }}</h3>
+            <p class="quartier-coloc" *ngIf="item.annonce?.quartier">
+              <app-icon name="map-pin" [size]="12"></app-icon>
+              <span>{{ item.annonce?.quartier }}</span>
+            </p>
+
+            <a
+              [routerLink]="['/espace', item.espace.annonceId || item.espace.id]"
+              class="btn btn-primary btn-sm btn-entrer-coloc"
+            >
+              <app-icon name="users" [size]="14"></app-icon>
+              <span>Accéder à mon espace</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 4. Section : Mes 3 derniers favoris -->
     <div class="section-annonces-dashboard">
       <div class="entete-section-dashboard">

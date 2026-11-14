@@ -485,6 +485,69 @@
   font-size: 0.82rem;
 }
 
+.btn-coloc-espace {
+  background-color: var(--blue);
+  color: #FFFFFF;
+  border: var(--border-main);
+  box-shadow: 2px 2px 0 #17202A;
+  font-weight: 600;
+}
+
+.btn-coloc-espace:hover {
+  background-color: var(--blue-dark);
+}
+
+/* 4. Section : Vos colocations actives */
+.bloc-espaces-actifs {
+  margin-top: 32px;
+}
+
+.grille-espaces-bailleur {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.carte-espace-bailleur {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  background-color: #FFFFFF;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.corps-espace-bailleur {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titre-espace-logement {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tags-espace-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-rejoindre-espace {
+  width: 100%;
+  justify-content: center;
+  box-shadow: 2px 2px 0 #17202A;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .grille-statistiques {

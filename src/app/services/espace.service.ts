@@ -376,21 +376,64 @@ export class EspaceService {
       .map(e => e.annonceId);
   }
 
+  // Récupère les espaces de colocation appartenant à un propriétaire
+  async getEspacesByProprietaire(proprietaireId: string): Promise<Espace[]> {
+    const colRef = collection(db, 'espaces');
+    const q = query(colRef, where('proprietaireId', '==', proprietaireId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...(d.data() as Espace), annonceId: d.id }));
+  }
+
   // Récupère les espaces de colocation où l'étudiant est membre accepté
   async getEspacesByEtudiant(etudiantId: string): Promise<Espace[]> {
-    const colRef = collection(db, 'espaces');
-    const snap = await getDocs(colRef);
-    const espaces: Espace[] = [];
-    for (const d of snap.docs) {
-      const membreRef = doc(db, 'espaces', d.id, 'membres', etudiantId);
-      const membreSnap = await getDoc(membreRef);
-      if (membreSnap.exists()) {
-        const membre = membreSnap.data() as Membre;
-        if (membre.statutAdhesion === 'accepte') {
-          espaces.push({ id: d.id, ...(d.data() as Espace) });
+    const espacesMap = new Map<string, Espace>();
+
+    // 1. Recherche par les demandes acceptées de l'étudiant
+    try {
+      const demandesCol = collection(db, 'demandes');
+      const qDemandes = query(
+        demandesCol,
+        where('etudiantId', '==', etudiantId),
+        where('statut', '==', 'acceptee')
+      );
+      const snapDemandes = await getDocs(qDemandes);
+      for (const d of snapDemandes.docs) {
+        const dData = d.data() as Demande;
+        if (dData.annonceId && !espacesMap.has(dData.annonceId)) {
+          const esp = await this.getEspace(dData.annonceId);
+          if (esp) {
+            espacesMap.set(dData.annonceId, esp);
+          }
         }
       }
+    } catch {
+      // Ignorer si index ou permissions
     }
-    return espaces;
+
+    // 2. Recherche sur la collection espaces pour les invitations / adhésions directes
+    try {
+      const colRef = collection(db, 'espaces');
+      const snap = await getDocs(colRef);
+      for (const d of snap.docs) {
+        if (!espacesMap.has(d.id)) {
+          try {
+            const membreRef = doc(db, 'espaces', d.id, 'membres', etudiantId);
+            const membreSnap = await getDoc(membreRef);
+            if (membreSnap.exists()) {
+              const membre = membreSnap.data() as Membre;
+              if (membre.statutAdhesion === 'accepte') {
+                espacesMap.set(d.id, { id: d.id, ...(d.data() as Espace), annonceId: d.id });
+              }
+            }
+          } catch {
+            // Document non accessible
+          }
+        }
+      }
+    } catch {
+      // Si la lecture de collection globale est restreinte
+    }
+
+    return Array.from(espacesMap.values());
   }
 }

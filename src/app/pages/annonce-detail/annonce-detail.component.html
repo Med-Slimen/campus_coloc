@@ -170,8 +170,22 @@
             </p>
           </div>
 
-          <!-- Si une demande initiale existe déjà -->
-          <div *ngIf="demandeExistante" class="encart-demande-existante">
+          <!-- Encart Colocataire Accepté : Accès direct à l'espace -->
+          <div *ngIf="estColocataire" class="encart-espace-acces encart-coloc-actif">
+            <div class="entete-espace-acces">
+              <span class="badge badge-sun">Vous êtes colocataire ici</span>
+            </div>
+            <p class="desc-espace-acces">
+              Votre candidature a été validée pour ce logement. Retrouvez vos colocataires, les règles de la maison et le salon de discussion dans l'espace partagé.
+            </p>
+            <a [routerLink]="['/espace', annonceId]" class="btn btn-primary w-full bouton-espace-detail">
+              <app-icon name="users" [size]="16"></app-icon>
+              <span>Accéder à mon espace de colocation</span>
+            </a>
+          </div>
+
+          <!-- Si une demande initiale existe déjà mais n'est pas encore acceptée -->
+          <div *ngIf="demandeExistante && !estColocataire" class="encart-demande-existante">
             <div class="ligne-statut-existante">
               <span class="tag-label">VOTRE DEMANDE :</span>
               <app-status-badge [statut]="demandeExistante.statut"></app-status-badge>
@@ -185,14 +199,14 @@
           </div>
 
           <!-- Si l'étudiant a demandé à rejoindre l'espace ouvert -->
-          <div *ngIf="aDemandeAdhesion" class="alerte-demande-transmise">
+          <div *ngIf="aDemandeAdhesion && !estColocataire" class="alerte-demande-transmise">
             <app-icon name="check" [size]="16"></app-icon>
             <span>Votre demande pour rejoindre cette colocation a été transmise au premier locataire.</span>
           </div>
 
           <!-- Bouton principal : Je suis intéressé OU Demander à rejoindre -->
           <button
-            *ngIf="!demandeExistante && !aDemandeAdhesion"
+            *ngIf="!demandeExistante && !aDemandeAdhesion && !estColocataire"
             type="button"
             class="btn btn-primary w-full bouton-action-principale"
             (click)="actionInteresse()"
@@ -227,9 +241,34 @@
           </p>
         </div>
 
-        <!-- Note si connecté en tant que propriétaire ou admin -->
+        <!-- Note et actions pour le propriétaire ou l'administrateur -->
         <div class="bloc-info-bailleur" *ngIf="estConnecte && !estEtudiant">
-          <p class="texte-info-bailleur">
+          <!-- Si c'est le propriétaire de cette annonce et qu'un espace existe -->
+          <div *ngIf="estMonAnnonce && hasEspace" class="encart-espace-acces encart-bailleur-actif">
+            <div class="entete-espace-acces">
+              <span class="badge badge-ok">Espace de colocation ouvert</span>
+            </div>
+            <p class="desc-espace-acces">
+              Vous êtes le bailleur de ce bien. Un espace de colocation est actif avec vos colocataires.
+            </p>
+            <a [routerLink]="['/espace', annonceId]" class="btn btn-primary w-full bouton-espace-detail">
+              <app-icon name="users" [size]="16"></app-icon>
+              <span>Accéder à l'espace de colocation</span>
+            </a>
+          </div>
+
+          <!-- Si c'est le propriétaire mais aucun espace encore -->
+          <div *ngIf="estMonAnnonce && !hasEspace" class="encart-mon-annonce-info">
+            <p class="texte-mon-bien">
+              Vous êtes le propriétaire de ce logement. Dès acceptation d'une première candidature, l'espace sera ouvert.
+            </p>
+            <a [routerLink]="['/mes-annonces/modifier', annonceId]" class="btn btn-secondary btn-sm w-full">
+              <app-icon name="pencil" [size]="14"></app-icon>
+              <span>Modifier mon annonce</span>
+            </a>
+          </div>
+
+          <p *ngIf="!estMonAnnonce" class="texte-info-bailleur">
             Vous visualisez cette annonce avec votre compte <strong>{{ authService.currentUser?.role }}</strong>.
             Les candidatures et favoris sont réservés aux comptes étudiants.
           </p>

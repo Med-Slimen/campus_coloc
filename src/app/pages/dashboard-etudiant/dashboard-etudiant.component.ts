@@ -13,6 +13,11 @@ import { DemandeService } from '../../services/demande.service';
 import { EspaceService } from '../../services/espace.service';
 import { Annonce, StatutVerification, VILLES_TUNISIE, Espace } from '../../models';
 
+export interface ColocationItemEtudiant {
+  espace: Espace;
+  annonce: Annonce | null;
+}
+
 @Component({
   selector: 'app-dashboard-etudiant',
   standalone: true,
@@ -48,6 +53,7 @@ export class DashboardEtudiantComponent implements OnInit {
   nbDemandes: number = 0;
   nbColocations: number = 0;
   colocations: Espace[] = [];
+  colocationsAvecAnnonce: ColocationItemEtudiant[] = [];
 
   // Annonces affichées
   derniersFavoris: Annonce[] = [];
@@ -101,6 +107,20 @@ export class DashboardEtudiantComponent implements OnInit {
       this.colocations = colocs;
       this.nbColocations = colocs.length;
       this.dernieresAnnonces = dernieres;
+
+      // Associer chaque colocation à son annonce pour un affichage enrichi
+      if (colocs.length > 0) {
+        const promessesAnnonces = colocs.map(c =>
+          this.annonceService.getById(c.annonceId || c.id || '').catch(() => null)
+        );
+        const annoncesColocs = await Promise.all(promessesAnnonces);
+        this.colocationsAvecAnnonce = colocs.map((c, idx) => ({
+          espace: c,
+          annonce: annoncesColocs[idx]
+        }));
+      } else {
+        this.colocationsAvecAnnonce = [];
+      }
 
       // 3. Récupération des 3 derniers favoris
       const favorisIds = user.favoris || [];

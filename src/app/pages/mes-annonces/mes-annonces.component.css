@@ -264,6 +264,26 @@
   flex-wrap: wrap;
 }
 
+.pastille-coloc-active {
+  background-color: #FEF3C7;
+  border-color: #F59E0B;
+  color: #92400E;
+}
+
+.btn-espace-card {
+  background-color: var(--couleur-bleu-primaire, #1D4ED8);
+  color: #FFFFFF;
+  border: var(--border-main);
+  box-shadow: 2px 2px 0 #17202A;
+  font-weight: 600;
+}
+
+.btn-espace-card:hover {
+  background-color: #1E40AF;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #17202A;
+}
+
 .btn-reactiver {
   color: #15803D;
 }
