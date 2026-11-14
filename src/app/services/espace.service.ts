@@ -228,7 +228,7 @@ export class EspaceService {
     const nbAcceptes = membres.filter(
       m => m.statutAdhesion === 'accepte' && m.etudiantId !== espace.proprietaireId
     ).length;
-    const capaciteMax = Number(annonce.nombrePlaces) || 1;
+    const capaciteMax = Number(annonce.nombrePlaces)+1 || 1;
 
     // Rétablissement automatique si l'espace était marqué 'complet'
     if (nbAcceptes < capaciteMax && espace.statut === 'complet') {
