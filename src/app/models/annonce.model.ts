@@ -1,6 +1,6 @@
 import { VilleTunisie } from './villes';
 
-export type StatutAnnonce = 'en_attente' | 'publiee' | 'suspendue' | 'refusee';
+export type StatutAnnonce = 'en_attente' | 'publiee' | 'suspendue' | 'refusee' | 'louee';
 
 // Modèle annonce Firestore : collection annonces/{id}
 export interface Annonce {

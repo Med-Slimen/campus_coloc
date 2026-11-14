@@ -120,19 +120,48 @@ export class AnnonceService {
   }
 
   // Récupère les annonces publiées avec prise en compte des filtres optionnels
+  // et exclusion stricte des annonces dont la colocation est confirmée et en cours
   async getPubliees(filtres?: {
     ville?: string;
     budgetMax?: number;
     meuble?: boolean;
   }): Promise<Annonce[]> {
+    const maintenant = new Date().toISOString();
+
+    // 1. Récupération des espaces confirmés en cours pour exclure les annonces concernées
+    const espacesConfirmesIds = new Set<string>();
+    try {
+      const espacesCol = collection(db, 'espaces');
+      const qEspaces = query(espacesCol, where('statut', '==', 'confirme'));
+      const snapEspaces = await getDocs(qEspaces);
+      for (const d of snapEspaces.docs) {
+        const esp = d.data();
+        if (esp['dateFinLocation'] && esp['dateFinLocation'] > maintenant) {
+          espacesConfirmesIds.add(d.id);
+        } else if (esp['dateFinLocation'] && esp['dateFinLocation'] <= maintenant) {
+          // La durée de location est échue : l'annonce peut réapparaître en ligne
+          try {
+            const annonceDocRef = doc(db, 'annonces', d.id);
+            await updateDoc(annonceDocRef, { statut: 'publiee' });
+          } catch {
+            // Ignorer si l'écriture échoue
+          }
+        }
+      }
+    } catch {
+      // Ignorer si lecture non autorisée
+    }
+
     const colRef = collection(db, 'annonces');
     const q = query(colRef, where('statut', '==', 'publiee'));
     const snap = await getDocs(q);
 
-    let annonces = snap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() as Annonce)
-    }));
+    let annonces = snap.docs
+      .map(d => ({
+        id: d.id,
+        ...(d.data() as Annonce)
+      }))
+      .filter(a => !espacesConfirmesIds.has(a.id || ''));
 
     if (filtres?.ville) {
       annonces = annonces.filter(a => a.ville === filtres.ville);
@@ -147,16 +176,10 @@ export class AnnonceService {
     return annonces.sort((a, b) => (b.dateCreation || '').localeCompare(a.dateCreation || ''));
   }
 
-  // Récupère les dernières annonces validées pour la page d'accueil
+  // Récupère les dernières annonces validées pour la page d'accueil (exclut les colocations confirmées en cours)
   async getDernieresAnnonces(nombre: number = 3): Promise<Annonce[]> {
-    const colRef = collection(db, 'annonces');
-    const q = query(colRef, where('statut', '==', 'publiee'), limit(nombre));
-    const snap = await getDocs(q);
-    const annonces = snap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() as Annonce)
-    }));
-    return annonces.sort((a, b) => (b.dateCreation || '').localeCompare(a.dateCreation || ''));
+    const publiees = await this.getPubliees();
+    return publiees.slice(0, nombre);
   }
 
   // Récupère l'intégralité des annonces pour le tableau de bord administrateur

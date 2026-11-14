@@ -60,6 +60,9 @@ export class DemandesComponent implements OnInit {
   // Données pour les propriétaires
   demandesProprietaire: DemandeProprietaireItem[] = [];
 
+  // Identifiants des annonces ayant un espace de colocation actif (non fermé)
+  espacesActifsIds: Set<string> = new Set();
+
   // États du composant
   chargement: boolean = true;
   erreur: string | null = null;
@@ -122,11 +125,35 @@ export class DemandesComponent implements OnInit {
 
         this.demandesEtudiant = await Promise.all(promesses);
       }
+
+      // Vérifier précisément quels logements possèdent un espace ACTIF (non fermé)
+      const idsAnnoncesAcceptees = new Set<string>();
+      if (this.estProprietaire) {
+        this.demandesProprietaire
+          .filter(i => i.demande.statut === 'acceptee')
+          .forEach(i => idsAnnoncesAcceptees.add(i.demande.annonceId));
+      } else {
+        this.demandesEtudiant
+          .filter(i => i.demande.statut === 'acceptee')
+          .forEach(i => idsAnnoncesAcceptees.add(i.demande.annonceId));
+      }
+
+      const checksEspaces = Array.from(idsAnnoncesAcceptees).map(async id => {
+        const esp = await this.espaceService.getEspaceActif(id).catch(() => null);
+        return { id, actif: !!esp };
+      });
+      const resultats = await Promise.all(checksEspaces);
+      this.espacesActifsIds = new Set(resultats.filter(r => r.actif).map(r => r.id));
     } catch {
       this.erreur = 'Impossible de récupérer la liste des demandes pour le moment.';
     } finally {
       this.chargement = false;
     }
+  }
+
+  // Vérifie si une annonce a un espace de colocation actif (non fermé)
+  aEspaceActif(annonceId: string): boolean {
+    return this.espacesActifsIds.has(annonceId);
   }
 
   // 1. Action Étudiant : Annuler une demande en attente
@@ -167,6 +194,7 @@ export class DemandesComponent implements OnInit {
     try {
       await this.espaceService.creerEspaceDepuisDemande(d, item.annonceTitre);
       d.statut = 'acceptee';
+      this.espacesActifsIds.add(d.annonceId);
       this.toastService.succes(
         `La candidature de ${item.etudiant?.nom || 'l\'étudiant'} a été acceptée et l'espace de colocation a été ouvert !`
       );

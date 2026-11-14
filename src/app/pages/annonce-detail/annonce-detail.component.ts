@@ -63,9 +63,9 @@ export class AnnonceDetailComponent implements OnInit {
   demandeExistante: Demande | null = null;
   aDemandeAdhesion: boolean = false;
 
-  // Détermine si l'étudiant est colocataire accepté (soit membre accepté, soit demande acceptée)
+  // Détermine si l'étudiant est colocataire accepté d'un espace actif
   get estColocataire(): boolean {
-    return this.estColocataireAccepte || this.demandeExistante?.statut === 'acceptee';
+    return this.hasEspace && (this.estColocataireAccepte || this.demandeExistante?.statut === 'acceptee');
   }
 
   // Détermine si l'utilisateur connecté est le propriétaire de cette annonce
@@ -167,14 +167,15 @@ export class AnnonceDetailComponent implements OnInit {
         }
       }
 
-      // Vérification si un espace existe déjà pour ce logement
+      // Vérification si un espace actif existe pour ce logement (non fermé)
       try {
         const espace = await this.espaceService.getEspace(id);
-        this.hasEspace = !!espace;
+        const estActif = !!(espace && espace.statut !== 'ferme');
+        this.hasEspace = estActif;
         this.espacePublicOuvert = !!(
-          espace &&
-          espace.visibilite === 'public' &&
-          espace.statut === 'ouvert'
+          estActif &&
+          espace?.visibilite === 'public' &&
+          espace?.statut === 'ouvert'
         );
 
         if (this.hasEspace && this.authService.currentUser?.uid) {
@@ -187,6 +188,8 @@ export class AnnonceDetailComponent implements OnInit {
             espace?.premierLocataireId === uid ||
             membres.some(m => m.etudiantId === uid && m.statutAdhesion === 'accepte')
           );
+        } else {
+          this.estColocataireAccepte = false;
         }
       } catch {
         this.hasEspace = false;

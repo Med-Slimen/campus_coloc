@@ -677,6 +677,193 @@
   white-space: nowrap;
 }
 
+/* Bannière espace fermé */
+.banniere-espace-ferme {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #FEF2F2;
+  border-left: 5px solid var(--danger);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.icone-ferme {
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.texte-ferme strong {
+  color: var(--danger);
+  font-size: 15px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.texte-ferme p {
+  color: #7F1D1D;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* Carte confirmation de colocation */
+.carte-confirmation-coloc {
+  background-color: #FFFFFF;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-offset-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.entete-bloc-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bloc-coloc-confirmee {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background-color: #ECFDF5;
+  border: 1.5px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.icone-succes-confirme {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--ok);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.texte-succes-confirme strong {
+  color: #065F46;
+  font-size: 15px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.texte-succes-confirme p {
+  font-size: 13.5px;
+  color: #047857;
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+
+.note-retiree-public {
+  display: block;
+  font-size: 12px;
+  color: #064E3B;
+  font-style: italic;
+}
+
+.bloc-en-cours-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.desc-confirmation {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.progression-confirmations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barre-progression-conteneur {
+  height: 8px;
+  background-color: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barre-progression-valeur {
+  height: 100%;
+  background-color: var(--blue);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.chiffre-progression {
+  font-size: 12.5px;
+  color: var(--ink);
+  align-self: flex-end;
+}
+
+.liste-etats-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #F8F9FA;
+  border: 1px solid rgba(23, 32, 42, 0.1);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.ligne-etat-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.membre-info-court {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.nom-court-coloc {
+  font-size: 13px;
+}
+
+.action-confirmer-membre {
+  margin-top: 4px;
+}
+
+.btn-action-confirmer {
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 2px 2px 0 #17202A;
+}
+
+.confirmation-deja-faite {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #065F46;
+  background-color: #ECFDF5;
+  border: 1px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 860px) {
   .grille-deux-colonnes {

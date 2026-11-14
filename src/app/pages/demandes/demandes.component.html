@@ -80,9 +80,9 @@
 
         <!-- Pied de la carte : Bouton Annuler si en_attente OU Accès Espace si acceptée -->
         <div class="pied-demande-etudiant">
-          <!-- Si la demande est acceptée : Bouton pour accéder directement à l'espace -->
+          <!-- Si la demande est acceptée et l'espace est actif : Bouton d'accès direct -->
           <a
-            *ngIf="item.demande.statut === 'acceptee'"
+            *ngIf="item.demande.statut === 'acceptee' && aEspaceActif(item.demande.annonceId)"
             [routerLink]="['/espace', item.demande.annonceId]"
             class="btn btn-primary btn-sm btn-espace-demande"
             title="Accéder au salon et aux détails de la colocation"
@@ -231,9 +231,10 @@
             </button>
           </div>
 
-          <!-- Si acceptée : lien d'accès direct à l'espace de colocation -->
+          <!-- Si acceptée : lien d'accès direct à l'espace de colocation actif -->
           <div class="actions-espace-accepte" *ngIf="item.demande.statut === 'acceptee'">
             <a
+              *ngIf="aEspaceActif(item.demande.annonceId)"
               [routerLink]="['/espace', item.demande.annonceId]"
               class="btn btn-primary btn-sm btn-espace-demande"
               title="Accéder à l'espace de colocation"
@@ -241,6 +242,9 @@
               <app-icon name="users" [size]="14"></app-icon>
               <span>Accéder à l'espace de colocation</span>
             </a>
+            <span *ngIf="!aEspaceActif(item.demande.annonceId)" class="statut-decision-note">
+              Colocation fermée ou achevée
+            </span>
           </div>
 
           <!-- Message si déjà traitée hors acceptée (refusée ou annulée) -->

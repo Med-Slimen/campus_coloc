@@ -74,14 +74,38 @@
       </div>
 
       <div class="badges-entete">
-        <!-- Statut Ouvert ou Complet -->
+        <!-- Statut (Ouvert, Complet, Confirmé, Fermé) -->
         <app-status-badge [statut]="espace.statut"></app-status-badge>
         <!-- Visibilité Privée ou Publique -->
         <span class="badge" [class.badge-ok]="espace.visibilite === 'public'" [class.badge-neutral]="espace.visibilite === 'prive'">
           {{ espace.visibilite === 'public' ? 'Colocation Publique' : 'Colocation Privée' }}
         </span>
+
+        <!-- Action Propriétaire : Fermer la colocation -->
+        <button
+          *ngIf="estProprietaire && espace.statut !== 'ferme'"
+          type="button"
+          class="btn btn-danger btn-sm btn-fermer-espace"
+          (click)="demanderFermerEspace()"
+          [disabled]="actionEnCours"
+          title="Fermer cet espace de colocation"
+        >
+          <app-icon name="close" [size]="14"></app-icon>
+          <span>Fermer la colocation</span>
+        </button>
       </div>
     </header>
+
+    <!-- Bannière si l'espace est fermé -->
+    <div *ngIf="espace.statut === 'ferme'" class="banniere-espace-ferme card">
+      <div class="icone-ferme">
+        <app-icon name="alert" [size]="24"></app-icon>
+      </div>
+      <div class="texte-ferme">
+        <strong>Espace de colocation clôturé</strong>
+        <p>{{ espace.motifFermeture || 'Cet espace a été fermé par le propriétaire. Les colocataires ne peuvent plus y effectuer de nouvelles opérations.' }}</p>
+      </div>
+    </div>
 
     <!-- Grille principale 2 colonnes -->
     <div class="grille-deux-colonnes">
@@ -101,6 +125,87 @@
             Loyer global ({{ annonce.loyer }} DT) + charges estimées ({{ annonce.charges || 0 }} DT)
             divisés équitablement entre les <strong>{{ membresAcceptes.length }}</strong> colocataire{{ membresAcceptes.length > 1 ? 's' : '' }} actuellement accepté{{ membresAcceptes.length > 1 ? 's' : '' }}.
           </p>
+        </div>
+
+        <!-- 1. bis : Carte Confirmation & Validation collective de la colocation -->
+        <div class="card carte-confirmation-coloc">
+          <div class="entete-bloc-confirmation">
+            <span class="tag-label">CONFIRMATION DE LA LOCATION</span>
+            <app-status-badge
+              [statut]="espace.statut === 'confirme' ? 'confirme' : 'en_attente'"
+              [textePersonnalise]="espace.statut === 'confirme' ? 'Colocation confirmée' : 'En attente de confirmation'"
+            ></app-status-badge>
+          </div>
+
+          <!-- Cas A : Colocation officiellement confirmée par tous les membres -->
+          <div *ngIf="espace.statut === 'confirme'" class="bloc-coloc-confirmee">
+            <div class="icone-succes-confirme">
+              <app-icon name="check" [size]="22"></app-icon>
+            </div>
+            <div class="texte-succes-confirme">
+              <strong>Colocation officiellement confirmée !</strong>
+              <p>
+                Tous les colocataires ont validé leur engagement. La colocation est confirmée pour une durée de <strong>{{ espace.dureeLocation || annonce.dureeLocation || '1 semestre' }}</strong><span *ngIf="espace.dateFinLocation"> (en cours jusqu'au {{ espace.dateFinLocation | date:'dd/MM/yyyy' }})</span>.
+              </p>
+              <small class="note-retiree-public">
+                Ce logement est masqué des annonces publiques jusqu'à la fin de la durée convenue.
+              </small>
+            </div>
+          </div>
+
+          <!-- Cas B : En attente de la confirmation de chacun -->
+          <div *ngIf="espace.statut !== 'confirme'" class="bloc-en-cours-confirmation">
+            <p class="desc-confirmation">
+              Pour valider définitivement la location, chaque colocataire accepté doit confirmer son engagement. Dès que tous les membres auront cliqué sur « Confirmer », la colocation sera confirmée et le logement réservé.
+            </p>
+
+            <div class="progression-confirmations">
+              <div class="barre-progression-conteneur">
+                <div
+                  class="barre-progression-valeur"
+                  [style.width.%]="(nbMembresConfirmes / Math.max(1, membresAcceptes.length)) * 100"
+                ></div>
+              </div>
+              <span class="chiffre-progression">
+                <strong>{{ nbMembresConfirmes }}</strong> / {{ membresAcceptes.length }} colocataire{{ membresAcceptes.length > 1 ? 's ont' : ' a' }} confirmé
+              </span>
+            </div>
+
+            <!-- Liste des colocataires et de leur état de confirmation -->
+            <div class="liste-etats-confirmation">
+              <div *ngFor="let m of membresAcceptes" class="ligne-etat-confirmation">
+                <div class="membre-info-court">
+                  <app-avatar [nom]="m.user?.nom || 'Membre'" [taille]="28" role="etudiant"></app-avatar>
+                  <span class="nom-court-coloc">{{ m.user?.nom || 'Colocataire' }}</span>
+                </div>
+                <span
+                  class="badge badge-sm"
+                  [ngClass]="m.membre.confirme ? 'badge-ok' : 'badge-neutral'"
+                >
+                  <app-icon [name]="m.membre.confirme ? 'check' : 'pause'" [size]="12"></app-icon>
+                  <span>{{ m.membre.confirme ? 'Confirmé' : 'En attente' }}</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Bouton pour le colocataire connecté s'il n'a pas encore confirmé -->
+            <div *ngIf="estMembreAccepte && !estProprietaire && !jAiConfirme && espace.statut !== 'ferme'" class="action-confirmer-membre">
+              <button
+                type="button"
+                class="btn btn-primary w-full btn-action-confirmer"
+                (click)="demanderConfirmerColocation()"
+                [disabled]="actionEnCours"
+              >
+                <app-icon name="check" [size]="16"></app-icon>
+                <span>Confirmer ma colocation</span>
+              </button>
+            </div>
+
+            <div *ngIf="estMembreAccepte && !estProprietaire && jAiConfirme" class="confirmation-deja-faite">
+              <app-icon name="check" [size]="16"></app-icon>
+              <span>Vous avez confirmé votre engagement. En attente des autres colocataires.</span>
+            </div>
+          </div>
         </div>
 
         <!-- 2. Informations du logement et contact du propriétaire (affiché ici uniquement) -->
@@ -385,15 +490,40 @@
     </div>
   </div>
 
-  <!-- Dialogue de confirmation pour quitter la colocation -->
+  <!-- 1. Dialogue de confirmation pour quitter la colocation -->
   <app-confirm-dialog
     [ouvert]="dialogQuitterOuvert"
     titre="Quitter cette colocation"
-    message="Êtes-vous certain de vouloir quitter définitivement cet espace de colocation ? Votre place sera libérée."
+    [message]="estPremierLocataire
+      ? 'En tant que premier locataire : si vous êtes le seul membre, la colocation sera fermée automatiquement. S\'il y a d\'autres colocataires, le plus ancien membre deviendra le nouveau premier locataire. Êtes-vous certain de vouloir quitter ?'
+      : 'Êtes-vous certain de vouloir quitter définitivement cet espace de colocation ? Votre place sera libérée.'"
     texteConfirmer="Confirmer mon départ"
     texteAnnuler="Rester dans la colocation"
     [dangereux]="true"
     (confirmer)="confirmerQuitter()"
     (annuler)="annulerQuitter()"
+  ></app-confirm-dialog>
+
+  <!-- 2. Dialogue de confirmation pour fermer l'espace par le propriétaire -->
+  <app-confirm-dialog
+    [ouvert]="dialogFermerOuvert"
+    titre="Fermer l'espace de colocation"
+    message="Êtes-vous certain de vouloir clôturer définitivement cet espace de colocation ? Les colocataires seront avertis et l'espace ne sera plus considéré comme actif."
+    texteConfirmer="Fermer la colocation"
+    texteAnnuler="Conserver ouvert"
+    [dangereux]="true"
+    (confirmer)="confirmerFermerEspace()"
+    (annuler)="annulerFermerEspace()"
+  ></app-confirm-dialog>
+
+  <!-- 3. Dialogue de confirmation d'engagement par le colocataire -->
+  <app-confirm-dialog
+    [ouvert]="dialogConfirmerColocOuvert"
+    titre="Confirmer mon engagement"
+    message="En confirmant, vous validez formellement votre participation à cette colocation pour la durée convenue. Une fois que tous les colocataires auront confirmé, la colocation sera scellée."
+    texteConfirmer="Confirmer mon engagement"
+    texteAnnuler="Annuler"
+    (confirmer)="validerConfirmationColocation()"
+    (annuler)="annulerConfirmerColocation()"
   ></app-confirm-dialog>
 </div>

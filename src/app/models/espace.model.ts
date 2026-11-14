@@ -1,5 +1,5 @@
 export type VisibiliteEspace = 'prive' | 'public';
-export type StatutEspace = 'ouvert' | 'complet';
+export type StatutEspace = 'ouvert' | 'complet' | 'confirme' | 'ferme';
 export type StatutAdhesion = 'invite' | 'demande' | 'accepte' | 'refuse';
 
 // Modèle espace Firestore : collection espaces/{annonceId}
@@ -12,6 +12,10 @@ export interface Espace {
   statut: StatutEspace;
   reglesMaison: string[];
   dateOuverture: string; // ISO string
+  dateConfirmation?: string; // ISO string quand tous les membres ont confirmé
+  dateFinLocation?: string; // ISO string date de fin calculée selon la durée
+  dureeLocation?: string;
+  motifFermeture?: string;
 }
 
 // Sous-collection membres : espaces/{annonceId}/membres/{etudiantId}
@@ -20,6 +24,8 @@ export interface Membre {
   premierLocataire: boolean;
   statutAdhesion: StatutAdhesion;
   dateAdhesion: string; // ISO string
+  confirme?: boolean; // Confirmation individuelle de la colocation
+  dateConfirmation?: string; // ISO string
 }
 
 // Alias pour compatibilité

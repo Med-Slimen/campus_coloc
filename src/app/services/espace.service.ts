@@ -331,16 +331,171 @@ export class EspaceService {
     });
   }
 
+  // Calcule la date de fin de location à partir de la durée définie dans l'annonce
+  calculerDateFin(duree: string, dateDepart: Date = new Date()): string {
+    const fin = new Date(dateDepart.getTime());
+    const d = (duree || '').toLowerCase();
+    if (d.includes('semestre')) {
+      fin.setMonth(fin.getMonth() + 6);
+    } else if (d.includes('ann') || d.includes('universitaire')) {
+      fin.setMonth(fin.getMonth() + 10);
+    } else if (d.includes('1 à 3') || d.includes('3 mois')) {
+      fin.setMonth(fin.getMonth() + 3);
+    } else {
+      fin.setMonth(fin.getMonth() + 6);
+    }
+    return fin.toISOString();
+  }
+
+  // Récupère l'espace s'il existe et s'il est actif (non fermé)
+  async getEspaceActif(annonceId: string): Promise<Espace | null> {
+    const espace = await this.getEspace(annonceId);
+    if (!espace || espace.statut === 'ferme') {
+      return null;
+    }
+    return espace;
+  }
+
   // 10. Met à jour les règles de la maison par le premier locataire
   async updateRegles(annonceId: string, regles: string[]): Promise<void> {
     const docRef = doc(db, 'espaces', annonceId);
     await updateDoc(docRef, { reglesMaison: regles });
   }
 
-  // 11. Quitter la colocation (un premier locataire ne peut pas partir s'il reste d'autres colocataires)
-  async leave(annonceId: string, etudiantId: string): Promise<void> {
-    const [espace, membres] = await Promise.all([
+  // 11. Fermeture de l'espace par le propriétaire
+  async fermerEspace(annonceId: string, motif?: string): Promise<void> {
+    const [espace, annonceSnap, membres] = await Promise.all([
       this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace de colocation introuvable.");
+
+    const batch = writeBatch(db);
+    const espaceRef = doc(db, 'espaces', annonceId);
+    batch.update(espaceRef, {
+      statut: 'ferme',
+      motifFermeture: motif || 'Espace fermé par le propriétaire'
+    });
+
+    // Si l'annonce était marquée louée, la remettre en publiée
+    if (annonceSnap.exists()) {
+      const a = annonceSnap.data() as Annonce;
+      if (a.statut === 'louee') {
+        const annonceRef = doc(db, 'annonces', annonceId);
+        batch.update(annonceRef, { statut: 'publiee' });
+      }
+    }
+
+    await batch.commit();
+
+    // Notifier tous les membres acceptés
+    const titre = annonceSnap.exists() ? (annonceSnap.data() as Annonce).titre : 'le logement';
+    const acceptes = membres.filter(m => m.statutAdhesion === 'accepte');
+    const maintenant = new Date().toISOString();
+
+    for (const m of acceptes) {
+      await this.notificationService.create({
+        userId: m.etudiantId,
+        type: 'demande',
+        contenu: `L'espace de colocation pour « ${titre} » a été fermé par le propriétaire.`,
+        lien: `/annonces/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+    }
+  }
+
+  // 12. Confirmation individuelle d'un membre colocataire
+  async confirmMembre(
+    annonceId: string,
+    etudiantId: string
+  ): Promise<{ espaceConfirme: boolean; dateFinLocation?: string }> {
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
+      this.getMembres(annonceId)
+    ]);
+
+    if (!espace) throw new Error("Espace de colocation introuvable.");
+    if (espace.statut === 'ferme') throw new Error("Cet espace de colocation est fermé.");
+
+    const maintenant = new Date().toISOString();
+
+    // 1. Mettre à jour la confirmation de ce membre
+    const membreRef = doc(db, 'espaces', annonceId, 'membres', etudiantId);
+    await updateDoc(membreRef, {
+      confirme: true,
+      dateConfirmation: maintenant
+    });
+
+    // 2. Vérifier si TOUS les membres acceptés ont désormais confirmé
+    const membresAcceptes = membres.filter(m => m.statutAdhesion === 'accepte');
+    const tousConfirmes = membresAcceptes.every(m =>
+      m.etudiantId === etudiantId ? true : m.confirme === true
+    );
+
+    if (tousConfirmes && membresAcceptes.length > 0) {
+      const annonce = annonceSnap.exists() ? (annonceSnap.data() as Annonce) : null;
+      const duree = espace.dureeLocation || annonce?.dureeLocation || '1 semestre';
+      const dateFin = this.calculerDateFin(duree);
+
+      const batch = writeBatch(db);
+      const espaceRef = doc(db, 'espaces', annonceId);
+      batch.update(espaceRef, {
+        statut: 'confirme',
+        dateConfirmation: maintenant,
+        dateFinLocation: dateFin,
+        dureeLocation: duree
+      });
+
+      // L'annonce ne doit plus apparaître dans les annonces publiques jusqu'à la fin de la durée
+      if (annonceSnap.exists()) {
+        const annonceRef = doc(db, 'annonces', annonceId);
+        batch.update(annonceRef, { statut: 'louee' });
+      }
+
+      await batch.commit();
+
+      // Notifications de félicitations à tous les membres et au propriétaire
+      const titre = annonce?.titre || 'le logement';
+      for (const m of membresAcceptes) {
+        await this.notificationService.create({
+          userId: m.etudiantId,
+          type: 'adhesion_acceptee',
+          contenu: `Excellente nouvelle ! Tous les colocataires ont validé leur engagement pour « ${titre} ». La colocation est officiellement confirmée !`,
+          lien: `/espace/${annonceId}`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+      }
+
+      if (espace.proprietaireId) {
+        await this.notificationService.create({
+          userId: espace.proprietaireId,
+          type: 'demande',
+          contenu: `Tous les colocataires ont confirmé leur colocation pour votre bien « ${titre} ». Le bail est désormais confirmé !`,
+          lien: `/espace/${annonceId}`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+      }
+
+      return { espaceConfirme: true, dateFinLocation: dateFin };
+    }
+
+    return { espaceConfirme: false };
+  }
+
+  // 13. Quitter la colocation avec gestion du premier locataire
+  async leave(annonceId: string, etudiantId: string): Promise<void> {
+    const [espace, annonceSnap, membres] = await Promise.all([
+      this.getEspace(annonceId),
+      getDoc(doc(db, 'annonces', annonceId)),
       this.getMembres(annonceId)
     ]);
 
@@ -348,14 +503,98 @@ export class EspaceService {
 
     const acceptes = membres.filter(m => m.statutAdhesion === 'accepte');
     const estPremier = espace.premierLocataireId === etudiantId;
+    const maintenant = new Date().toISOString();
+    const titre = annonceSnap.exists() ? (annonceSnap.data() as Annonce).titre : 'le logement';
 
-    // Règle 7 : le premier locataire ne peut pas quitter tant qu'il reste d'autres membres
-    if (estPremier && acceptes.length > 1) {
-      throw new Error(
-        "En tant que premier locataire, vous ne pouvez pas quitter la colocation tant que d'autres colocataires y résident."
-      );
+    if (estPremier) {
+      const autresAcceptes = acceptes.filter(m => m.etudiantId !== etudiantId);
+
+      // Si le premier locataire est seul : fermeture automatique de l'espace
+      if (autresAcceptes.length === 0) {
+        const batch = writeBatch(db);
+        const membreRef = doc(db, 'espaces', annonceId, 'membres', etudiantId);
+        batch.update(membreRef, { statutAdhesion: 'refuse', premierLocataire: false });
+
+        const espaceRef = doc(db, 'espaces', annonceId);
+        batch.update(espaceRef, {
+          statut: 'ferme',
+          motifFermeture: 'Fermé automatiquement suite au départ du premier locataire'
+        });
+
+        if (annonceSnap.exists()) {
+          const a = annonceSnap.data() as Annonce;
+          if (a.statut === 'louee') {
+            const annonceRef = doc(db, 'annonces', annonceId);
+            batch.update(annonceRef, { statut: 'publiee' });
+          }
+        }
+
+        await batch.commit();
+
+        // Notifier le propriétaire
+        await this.notificationService.create({
+          userId: espace.proprietaireId,
+          type: 'demande',
+          contenu: `Le premier locataire a quitté la colocation pour « ${titre} ». N'ayant pas d'autres colocataires, l'espace a été fermé automatiquement.`,
+          lien: `/mes-annonces`,
+          lue: false,
+          dateEnvoi: maintenant,
+          annonceId
+        });
+
+        return;
+      }
+
+      // S'il reste d'autres colocataires : le plus ancien devient le nouveau premier locataire
+      autresAcceptes.sort((a, b) => (a.dateAdhesion || '').localeCompare(b.dateAdhesion || ''));
+      const nouveauPremier = autresAcceptes[0];
+
+      const batch = writeBatch(db);
+      // Ancien premier locataire
+      const membreSortantRef = doc(db, 'espaces', annonceId, 'membres', etudiantId);
+      batch.update(membreSortantRef, { statutAdhesion: 'refuse', premierLocataire: false });
+
+      // Nouveau premier locataire
+      const nouveauPremierRef = doc(db, 'espaces', annonceId, 'membres', nouveauPremier.etudiantId);
+      batch.update(nouveauPremierRef, { premierLocataire: true });
+
+      // Mise à jour de l'espace
+      const espaceRef = doc(db, 'espaces', annonceId);
+      const updatesEspace: any = {
+        premierLocataireId: nouveauPremier.etudiantId
+      };
+      if (espace.statut === 'complet') {
+        updatesEspace.statut = 'ouvert';
+      }
+      batch.update(espaceRef, updatesEspace);
+
+      await batch.commit();
+
+      // Notifications
+      await this.notificationService.create({
+        userId: nouveauPremier.etudiantId,
+        type: 'adhesion_acceptee',
+        contenu: `Suite au départ du premier locataire pour « ${titre} », vous êtes désormais désigné premier locataire et administrateur de cet espace !`,
+        lien: `/espace/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      await this.notificationService.create({
+        userId: espace.proprietaireId,
+        type: 'demande',
+        contenu: `Le premier locataire a quitté la colocation pour « ${titre} ». Le colocataire le plus ancien a été automatiquement promu premier locataire.`,
+        lien: `/espace/${annonceId}`,
+        lue: false,
+        dateEnvoi: maintenant,
+        annonceId
+      });
+
+      return;
     }
 
+    // Départ d'un colocataire ordinaire
     const membreRef = doc(db, 'espaces', annonceId, 'membres', etudiantId);
     await updateDoc(membreRef, { statutAdhesion: 'refuse' });
 
@@ -376,15 +615,33 @@ export class EspaceService {
       .map(e => e.annonceId);
   }
 
-  // Récupère les espaces de colocation appartenant à un propriétaire
+  // Récupère les espaces de colocation actifs (non fermés) appartenant à un propriétaire
   async getEspacesByProprietaire(proprietaireId: string): Promise<Espace[]> {
     const colRef = collection(db, 'espaces');
     const q = query(colRef, where('proprietaireId', '==', proprietaireId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...(d.data() as Espace), annonceId: d.id }));
+    return snap.docs
+      .map(d => ({ id: d.id, ...(d.data() as Espace), annonceId: d.id }))
+      .filter(e => e.statut !== 'ferme');
   }
 
-  // Récupère les espaces de colocation où l'étudiant est membre accepté
+  // Récupère la liste des annonces dont la colocation est confirmée et dont la durée n'est pas encore expirée
+  async getEspacesConfirmesEnCoursIds(): Promise<string[]> {
+    try {
+      const colRef = collection(db, 'espaces');
+      const q = query(colRef, where('statut', '==', 'confirme'));
+      const snap = await getDocs(q);
+      const maintenant = new Date().toISOString();
+      return snap.docs
+        .map(d => ({ ...(d.data() as Espace), annonceId: d.id }))
+        .filter(e => !e.dateFinLocation || e.dateFinLocation > maintenant)
+        .map(e => e.annonceId);
+    } catch {
+      return [];
+    }
+  }
+
+  // Récupère les espaces de colocation où l'étudiant est membre accepté et l'espace est actif (non fermé)
   async getEspacesByEtudiant(etudiantId: string): Promise<Espace[]> {
     const espacesMap = new Map<string, Espace>();
 
@@ -401,7 +658,7 @@ export class EspaceService {
         const dData = d.data() as Demande;
         if (dData.annonceId && !espacesMap.has(dData.annonceId)) {
           const esp = await this.getEspace(dData.annonceId);
-          if (esp) {
+          if (esp && esp.statut !== 'ferme') {
             espacesMap.set(dData.annonceId, esp);
           }
         }
@@ -422,7 +679,10 @@ export class EspaceService {
             if (membreSnap.exists()) {
               const membre = membreSnap.data() as Membre;
               if (membre.statutAdhesion === 'accepte') {
-                espacesMap.set(d.id, { id: d.id, ...(d.data() as Espace), annonceId: d.id });
+                const esp = { id: d.id, ...(d.data() as Espace), annonceId: d.id };
+                if (esp.statut !== 'ferme') {
+                  espacesMap.set(d.id, esp);
+                }
               }
             }
           } catch {

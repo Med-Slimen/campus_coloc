@@ -24,6 +24,7 @@ export class StatusBadgeComponent {
       case 'traite':
       case 'ouvert':
       case 'public':
+      case 'confirme':
         return 'badge-ok';
 
       case 'en_attente':
@@ -38,8 +39,10 @@ export class StatusBadgeComponent {
 
       case 'refusee':
       case 'refuse':
+      case 'ferme':
         return 'badge-danger';
 
+      case 'louee':
       case 'annulee':
       case 'prive':
       default:
@@ -65,6 +68,9 @@ export class StatusBadgeComponent {
       case 'annulee': return 'Annulée';
       case 'ouvert': return 'Ouvert';
       case 'complet': return 'Complet';
+      case 'confirme': return 'Confirmé';
+      case 'ferme': return 'Fermé';
+      case 'louee': return 'Louée';
       case 'traite': return 'Traité';
       case 'prive': return 'Privé';
       case 'public': return 'Public';

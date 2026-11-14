@@ -69,12 +69,45 @@ export class EspaceComponent implements OnInit, OnDestroy {
 
   // États du dialogue de confirmation pour quitter
   dialogQuitterOuvert: boolean = false;
+  // États du dialogue pour fermer l'espace par le propriétaire
+  dialogFermerOuvert: boolean = false;
+  // États du dialogue pour confirmer la colocation par un colocataire
+  dialogConfirmerColocOuvert: boolean = false;
   actionEnCours: boolean = false;
+
+  // Accès à Math pour les templates
+  readonly Math = Math;
 
   // États de chargement et d'accès
   chargement: boolean = true;
   erreur: string | null = null;
   accesRefuse: boolean = false;
+
+  // Détermine si l'espace est fermé
+  get estFerme(): boolean {
+    return this.espace?.statut === 'ferme';
+  }
+
+  // Détermine si l'espace est officiellement confirmé
+  get estConfirme(): boolean {
+    return this.espace?.statut === 'confirme';
+  }
+
+  // Nombre de membres acceptés ayant déjà confirmé
+  get nbMembresConfirmes(): number {
+    return this.membresAcceptes.filter(m => m.membre.confirme).length;
+  }
+
+  // Membre courant de l'utilisateur connecté
+  get monMembre(): MembreDetailItem | undefined {
+    const uid = this.authService.currentUser?.uid;
+    return this.membresDetails.find(m => m.membre.etudiantId === uid);
+  }
+
+  // Détermine si l'utilisateur connecté a déjà confirmé son engagement
+  get jAiConfirme(): boolean {
+    return this.monMembre?.membre.confirme === true;
+  }
 
   // Détermine si l'utilisateur actuel est le propriétaire du logement
   get estProprietaire(): boolean {
@@ -333,7 +366,7 @@ export class EspaceComponent implements OnInit, OnDestroy {
     }
   }
 
-  // 6. Quitter la colocation
+  // 6. Quitter la colocation (auto-fermeture si premier seul, ou transmission au plus ancien)
   demanderQuitter(): void {
     this.dialogQuitterOuvert = true;
   }
@@ -355,6 +388,71 @@ export class EspaceComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       this.toastService.erreur(err?.message || "Impossible de quitter l'espace.");
       this.dialogQuitterOuvert = false;
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // 7. Fermer l'espace de colocation par le propriétaire
+  demanderFermerEspace(): void {
+    this.dialogFermerOuvert = true;
+  }
+
+  annulerFermerEspace(): void {
+    this.dialogFermerOuvert = false;
+  }
+
+  async confirmerFermerEspace(): Promise<void> {
+    if (!this.estProprietaire) return;
+
+    this.actionEnCours = true;
+    try {
+      await this.espaceService.fermerEspace(this.annonceId);
+      if (this.espace) {
+        this.espace.statut = 'ferme';
+      }
+      this.toastService.succes("L'espace de colocation a été fermé avec succès.");
+      this.dialogFermerOuvert = false;
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Erreur lors de la fermeture de l'espace.");
+    } finally {
+      this.actionEnCours = false;
+    }
+  }
+
+  // 8. Confirmation de la colocation par un membre colocataire
+  demanderConfirmerColocation(): void {
+    this.dialogConfirmerColocOuvert = true;
+  }
+
+  annulerConfirmerColocation(): void {
+    this.dialogConfirmerColocOuvert = false;
+  }
+
+  async validerConfirmationColocation(): Promise<void> {
+    const user = this.authService.currentUser;
+    if (!user || !user.uid) return;
+
+    this.actionEnCours = true;
+    try {
+      const res = await this.espaceService.confirmMembre(this.annonceId, user.uid);
+      if (res.espaceConfirme) {
+        if (this.espace) {
+          this.espace.statut = 'confirme';
+          this.espace.dateConfirmation = new Date().toISOString();
+          this.espace.dateFinLocation = res.dateFinLocation;
+        }
+        this.toastService.succes(
+          "Félicitations ! Tous les colocataires ont confirmé. La colocation est officiellement validée !"
+        );
+      } else {
+        this.toastService.succes("Votre confirmation d'engagement a bien été enregistrée.");
+      }
+
+      await this.rafraichirMembres();
+      this.dialogConfirmerColocOuvert = false;
+    } catch (err: any) {
+      this.toastService.erreur(err?.message || "Impossible de confirmer votre engagement.");
     } finally {
       this.actionEnCours = false;
     }
