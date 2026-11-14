@@ -1,0 +1,304 @@
+<div class="page-admin">
+  <div class="en-tete-page">
+    <div>
+      <span class="tag-label">MODÉRATION DU CONTENU</span>
+      <h1 class="titre-page">Modération des annonces</h1>
+      <p class="desc-page">Contrôlez les logements soumis par les propriétaires avant et après publication.</p>
+    </div>
+  </div>
+
+  <!-- Barre des onglets -->
+  <div class="barre-onglets">
+    <button
+      type="button"
+      class="onglet-btn"
+      [class.actif]="ongletActif === 'en_attente'"
+      (click)="changerOnglet('en_attente')"
+    >
+      <span>En attente de validation</span>
+      <span class="badge-compteur" [class.alerte]="countEnAttente > 0">{{ countEnAttente }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="onglet-btn"
+      [class.actif]="ongletActif === 'publiee'"
+      (click)="changerOnglet('publiee')"
+    >
+      <span>Publiées</span>
+      <span class="badge-compteur">{{ countPubliees }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="onglet-btn"
+      [class.actif]="ongletActif === 'suspendue'"
+      (click)="changerOnglet('suspendue')"
+    >
+      <span>Suspendues</span>
+      <span class="badge-compteur">{{ countSuspendues }}</span>
+    </button>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-chargement">
+    <app-loader type="table" [count]="4"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-erreur">
+    <app-error-message [message]="erreur" (reessayer)="chargerAnnonces()"></app-error-message>
+  </div>
+
+  <!-- État vide pour l'onglet actif -->
+  <div *ngIf="!chargement && !erreur && annoncesFiltrees.length === 0" class="zone-vide card">
+    <app-empty-state
+      icone="shield-check"
+      [titre]="ongletActif === 'en_attente' ? 'Aucune annonce en attente' : 'Aucune annonce dans cette catégorie'"
+      [description]="ongletActif === 'en_attente' ? 'Toutes les annonces soumises ont été vérifiées.' : 'Les annonces correspondantes apparaîtront ici.'"
+    ></app-empty-state>
+  </div>
+
+  <!-- 1. VUE SPÉCIFIQUE : ANNONCES EN ATTENTE (Fiche détaillée avec photos, description, etc.) -->
+  <div *ngIf="!chargement && !erreur && annoncesFiltrees.length > 0 && ongletActif === 'en_attente'" class="liste-annonces-attente">
+    <div *ngFor="let a of annoncesFiltrees" class="card carte-attente-detail">
+      
+      <!-- En-tête de la carte avec Titre, Ville, Statut -->
+      <div class="entete-carte-attente">
+        <div>
+          <div class="ligne-localisation">
+            <span class="badge badge-neutral">
+              <app-icon name="map-pin" [size]="12"></app-icon>
+              {{ a.ville }}
+            </span>
+            <span *ngIf="a.quartier" class="quartier-texte">Quartier : <strong>{{ a.quartier }}</strong></span>
+            <span class="date-soumission">Soumis le {{ a.dateCreation | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+          <h2 class="titre-annonce">{{ a.titre }}</h2>
+        </div>
+
+        <app-status-badge statut="en_attente" textePersonnalise="À vérifier"></app-status-badge>
+      </div>
+
+      <!-- Galerie photos (jusqu'à 4 photos avec zoom au clic) -->
+      <div class="section-photos-attente">
+        <span class="titre-section-interne">Photos transmises ({{ a.photos.length || 0 }})</span>
+        <div *ngIf="a.photos && a.photos.length > 0" class="galerie-miniatures">
+          <div *ngFor="let p of a.photos" class="vignette-photo" (click)="ouvrirZoom(p)" title="Agrandir la photo">
+            <img [src]="p" alt="Photo logement" class="img-miniature" />
+            <div class="survol-zoom">
+              <app-icon name="eye" [size]="16"></app-icon>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!a.photos || a.photos.length === 0" class="avis-sans-photo">
+          <app-icon name="alert" [size]="16"></app-icon>
+          <span>Aucune photo fournie par le propriétaire.</span>
+        </div>
+      </div>
+
+      <!-- Informations clés : Loyer, Charges, Places, Durée, Meublé -->
+      <div class="grille-infos-attente">
+        <div class="bloc-info-cle">
+          <span class="cle-label">Loyer mensuel</span>
+          <span class="cle-valeur">{{ a.loyer }} DT</span>
+        </div>
+        <div class="bloc-info-cle">
+          <span class="cle-label">Charges estimées</span>
+          <span class="cle-valeur">{{ a.charges ? a.charges + ' DT' : 'Incluses' }}</span>
+        </div>
+        <div class="bloc-info-cle">
+          <span class="cle-label">Nombre de places</span>
+          <span class="cle-valeur">{{ a.nombrePlaces }} place{{ (a.nombrePlaces || 1) > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="bloc-info-cle surbrillance-coloc">
+          <span class="cle-label">Budget / personne</span>
+          <span class="cle-valeur">{{ getBudgetPersonne(a) }} DT / mois</span>
+        </div>
+        <div class="bloc-info-cle">
+          <span class="cle-label">Ameublement</span>
+          <span class="cle-valeur">{{ a.meuble ? 'Entièrement meublé' : 'Non meublé' }}</span>
+        </div>
+        <div class="bloc-info-cle">
+          <span class="cle-label">Durée de location</span>
+          <span class="cle-valeur">{{ a.dureeLocation || 'Non précisée' }}</span>
+        </div>
+      </div>
+
+      <!-- Description détaillée -->
+      <div class="bloc-description-attente">
+        <span class="titre-section-interne">Description fournie</span>
+        <p class="texte-description">{{ a.description }}</p>
+      </div>
+
+      <!-- Actions de modération : Publier ou Refuser (motif obligatoire) -->
+      <div class="barre-actions-moderation">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="approuver(a)"
+          [disabled]="actionEnCours"
+        >
+          <app-icon name="check" [size]="16"></app-icon>
+          <span>Publier l'annonce</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="ouvrirRefus(a)"
+          [disabled]="actionEnCours"
+        >
+          <app-icon name="close" [size]="16"></app-icon>
+          <span>Refuser l'annonce</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. VUE TABLEAU : ANNONCES PUBLIÉES ET SUSPENDUES -->
+  <div *ngIf="!chargement && !erreur && annoncesFiltrees.length > 0 && ongletActif !== 'en_attente'" class="card tableau-carte">
+    <div class="table-responsive">
+      <table class="table-admin">
+        <thead>
+          <tr>
+            <th>VISUEL</th>
+            <th>TITRE DU LOGEMENT</th>
+            <th>GOUVERNORAT</th>
+            <th>LOYER TOTAL</th>
+            <th>BUDGET / COLOC</th>
+            <th>PLACES</th>
+            <th>STATUT</th>
+            <th class="col-action">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of annoncesFiltrees">
+            <td class="col-visuel">
+              <img
+                *ngIf="a.photos && a.photos.length > 0"
+                [src]="a.photos[0]"
+                alt=""
+                class="mini-vignette-table"
+                (click)="ouvrirZoom(a.photos[0])"
+              />
+              <div *ngIf="!a.photos || a.photos.length === 0" class="mini-sans-photo">
+                <app-icon name="home" [size]="16"></app-icon>
+              </div>
+            </td>
+            <td>
+              <strong class="titre-ligne">{{ a.titre }}</strong>
+              <div *ngIf="a.quartier" class="sous-texte-quartier">{{ a.quartier }}</div>
+            </td>
+            <td><span class="badge badge-neutral">{{ a.ville }}</span></td>
+            <td><span class="prix-tabular">{{ a.loyer }} DT</span></td>
+            <td><span class="prix-tabular surbrillance-bleu">{{ getBudgetPersonne(a) }} DT</span></td>
+            <td>{{ a.nombrePlaces }} place{{ (a.nombrePlaces || 1) > 1 ? 's' : '' }}</td>
+            <td>
+              <app-status-badge [statut]="a.statut"></app-status-badge>
+            </td>
+            <td class="col-action">
+              <div class="actions-ligne">
+                <!-- Suspendre si publiée -->
+                <button
+                  *ngIf="a.statut === 'publiee'"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  (click)="suspendre(a)"
+                  [disabled]="actionEnCours"
+                  title="Suspendre l'annonce"
+                >
+                  <app-icon name="pause" [size]="14"></app-icon>
+                  <span>Suspendre</span>
+                </button>
+
+                <!-- Réactiver si suspendue -->
+                <button
+                  *ngIf="a.statut === 'suspendue'"
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="reactiver(a)"
+                  [disabled]="actionEnCours"
+                  title="Réactiver l'annonce"
+                >
+                  <app-icon name="play" [size]="14"></app-icon>
+                  <span>Réactiver</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODALE : MOTIF DE REFUS OBLIGATOIRE -->
+  <div *ngIf="dialogRefusOuvert" class="modale-superposition">
+    <div class="modale-boite card">
+      <div class="modale-entete">
+        <div class="icone-modale-danger">
+          <app-icon name="alert" [size]="20"></app-icon>
+        </div>
+        <div>
+          <h3 class="modale-titre">Refuser l'annonce</h3>
+          <p class="modale-sous-titre">« {{ annonceARefuser?.titre }} »</p>
+        </div>
+      </div>
+
+      <div class="modale-corps">
+        <label for="motifRefusInput" class="label-refus">
+          Motif du refus <span class="requis">*</span>
+        </label>
+        <p class="aide-refus-modale">
+          Indiquez clairement au propriétaire la raison de ce refus (ex: photos non conformes, loyer hors barème, fausse adresse, etc.). Ce motif lui sera transmis par notification.
+        </p>
+
+        <textarea
+          id="motifRefusInput"
+          [(ngModel)]="motifRefusSaisi"
+          rows="4"
+          placeholder="Ex : Photos de mauvaise qualité. Veuillez ajouter au moins une photo lumineuse de la chambre et du séjour."
+          class="textarea"
+          [class.input-erreur]="erreurMotif"
+        ></textarea>
+
+        <div *ngIf="erreurMotif" class="erreur-motif-texte">
+          <app-icon name="alert" [size]="14"></app-icon>
+          <span>{{ erreurMotif }}</span>
+        </div>
+      </div>
+
+      <div class="modale-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="fermerRefus()"
+          [disabled]="actionEnCours"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmerRefus()"
+          [disabled]="actionEnCours"
+        >
+          <app-icon name="close" [size]="16"></app-icon>
+          <span>Confirmer le refus</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE : APERÇU GRAND FORMAT D'UNE PHOTO -->
+  <div *ngIf="photoZoom" class="modale-superposition zoom-superposition" (click)="fermerZoom()">
+    <div class="zoom-conteneur" (click)="$event.stopPropagation()">
+      <button type="button" class="btn-fermer-zoom" (click)="fermerZoom()" title="Fermer">
+        <app-icon name="close" [size]="20"></app-icon>
+      </button>
+      <img [src]="photoZoom" alt="Agrandissement photo" class="img-zoom" />
+    </div>
+  </div>
+
+</div>

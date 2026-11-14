@@ -1,0 +1,328 @@
+.page-profil {
+  padding: 40px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.en-tete-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 16px;
+}
+
+.titre-profil {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.grille-profil {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* ==========================================================================
+   COLONNE GAUCHE : Identité & Vérification
+   ========================================================================== */
+.colonne-gauche {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.carte-identite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.avatar-bloc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions-photo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-supprimer-photo {
+  padding: 6px;
+  color: var(--danger);
+}
+
+.nom-utilisateur {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.role-etiquette {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.email-desc {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* Carte de vérification d'identité */
+.carte-verification {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.entete-verification {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #ECE3D4;
+  padding-bottom: 12px;
+}
+
+.titre-bloc-verif {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  margin: 2px 0 0;
+  color: var(--ink);
+}
+
+.consigne-verif {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.mention-type-fixe {
+  background-color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.zone-depot-fichier {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.btn-choisir-doc {
+  padding: 10px;
+}
+
+.apercu-avant-envoi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 8px;
+}
+
+.miniature-justif {
+  width: 60px;
+  height: 44px;
+  object-fit: cover;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+}
+
+.info-miniature {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.nom-fichier {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Alertes d'état encadrées */
+.alerte-encadree {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.alerte-encadree strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.alerte-encadree p {
+  margin: 0;
+}
+
+.alerte-attente {
+  background-color: #FFFBEA;
+  border-color: var(--warn);
+  color: #744210;
+}
+
+.alerte-succes {
+  background-color: #EBF7EE;
+  border-color: var(--ok);
+  color: #1C4D2E;
+}
+
+.alerte-refus {
+  background-color: #FDF2F2;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.motif-texte {
+  margin-top: 4px !important;
+  color: var(--danger);
+}
+
+/* Aperçu de la pièce pour le propriétaire du compte */
+.apercu-piece-proprietaire {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.image-piece-client {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background-color: #F8F5EE;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+}
+
+.image-refusee {
+  opacity: 0.7;
+  filter: grayscale(40%);
+}
+
+.mention-privee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   COLONNE DROITE : Coordonnées et Cursus
+   ========================================================================== */
+.colonne-droite {
+  display: flex;
+  flex-direction: column;
+}
+
+.carte-formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+}
+
+.entete-formulaire {
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 12px;
+}
+
+.titre-formulaire {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.formulaire-profil {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.input-lecture-seule {
+  background-color: #ECE3D4;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.aide-saisie {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.separateur-section {
+  border-top: 1.5px dashed var(--ink);
+  margin: 10px 0 2px;
+  padding-top: 16px;
+}
+
+.btn-enregistrer {
+  margin-top: 8px;
+  padding: 12px;
+  font-size: 1rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #FDF2F2;
+  border: 1.5px solid var(--danger);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 860px) {
+  .grille-profil {
+    grid-template-columns: 1fr;
+  }
+}

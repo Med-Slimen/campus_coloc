@@ -1,0 +1,142 @@
+<div class="container page-notifications">
+  <!-- En-tête de la page -->
+  <div class="en-tete-page">
+    <div class="titres-bloc">
+      <span class="tag-label">CENTRE D'ACTIVITÉ</span>
+      <h1 class="titre-principal">Mes Notifications</h1>
+      <p class="desc-page">
+        Consultez l'historique de vos alertes, validations d'identité, candidatures et activités de colocation.
+      </p>
+    </div>
+
+    <!-- Actions rapides d'en-tête -->
+    <div class="actions-en-tete" *ngIf="!chargement && !erreur && notifications.length > 0">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        (click)="marquerToutCommeLu()"
+        [disabled]="actionEnCours || nbNonLues === 0"
+        title="Marquer toutes les notifications comme lues"
+      >
+        <app-icon name="check" [size]="14"></app-icon>
+        <span>Tout marquer comme lu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre d'onglets de filtrage -->
+  <div class="barre-filtres" *ngIf="!chargement && !erreur && notifications.length > 0">
+    <div class="groupe-onglets">
+      <button
+        type="button"
+        class="onglet-btn"
+        [class.actif]="filtreActif === 'toutes'"
+        (click)="changerFiltre('toutes')"
+      >
+        <span>Toutes</span>
+        <span class="compteur-onglet">{{ notifications.length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-btn"
+        [class.actif]="filtreActif === 'non_lues'"
+        (click)="changerFiltre('non_lues')"
+      >
+        <span>Non lues</span>
+        <span class="compteur-onglet" [class.alerte]="nbNonLues > 0">{{ nbNonLues }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="lines" [count]="4"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerNotifications()"></app-error-message>
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!chargement && !erreur && notificationsFiltrees.length === 0" class="zone-etat">
+    <app-empty-state
+      [titre]="filtreActif === 'non_lues' ? 'Toutes vos notifications sont lues' : 'Aucune notification pour le moment'"
+      [description]="filtreActif === 'non_lues' ? 'Vous êtes à jour ! Consultez l\'onglet « Toutes » pour revoir vos précédentes notifications.' : 'Vous recevrez ici les confirmations de modération, réponses à vos candidatures et messages collectifs.'"
+      icone="bell"
+      [texteAction]="filtreActif === 'non_lues' ? 'Afficher toutes les notifications' : 'Retourner à l’accueil'"
+      (action)="filtreActif === 'non_lues' ? changerFiltre('toutes') : naviguerVersAccueil()"
+    ></app-empty-state>
+  </div>
+
+  <!-- Liste des notifications -->
+  <div *ngIf="!chargement && !erreur && notificationsFiltrees.length > 0" class="liste-notifications">
+    <div
+      *ngFor="let notif of notificationsFiltrees"
+      class="carte-notification"
+      [class.non-lue]="!notif.lue"
+      (click)="cliquerNotification(notif)"
+    >
+      <!-- Icône de catégorie -->
+      <div class="colonne-icone">
+        <div class="boite-icone" [ngClass]="'icone-' + notif.type">
+          <app-icon [name]="getIcone(notif.type)" [size]="20"></app-icon>
+        </div>
+      </div>
+
+      <!-- Contenu textuel principal -->
+      <div class="colonne-details">
+        <div class="metadonnees-notif">
+          <span class="badge-type">{{ getBadgeLabel(notif.type) }}</span>
+          <span class="separateur-meta">•</span>
+          <span class="date-envoi">{{ notif.dateEnvoi | date:'dd MMMM yyyy à HH:mm' }}</span>
+          <span *ngIf="!notif.lue" class="badge-nouveau">NOUVEAU</span>
+        </div>
+
+        <p class="texte-notification">{{ notif.contenu }}</p>
+
+        <!-- Actions spécifiques aux invitations d'espace (Règle 6) -->
+        <div *ngIf="notif.type === 'invitation_espace' && notif.annonceId" class="zone-actions-invitation">
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            (click)="repondreInvitation(notif, 'accepte', $event)"
+            [disabled]="actionEnCours"
+          >
+            <app-icon name="check" [size]="14"></app-icon>
+            <span>Accepter l'invitation</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="repondreInvitation(notif, 'refuse', $event)"
+            [disabled]="actionEnCours"
+          >
+            <app-icon name="close" [size]="14"></app-icon>
+            <span>Décliner</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions de droite -->
+      <div class="colonne-actions">
+        <button
+          *ngIf="!notif.lue"
+          type="button"
+          class="btn-action-lue"
+          (click)="marquerCommeLue(notif, $event)"
+          title="Marquer comme lue"
+        >
+          <app-icon name="check" [size]="14"></app-icon>
+          <span>Marquer lue</span>
+        </button>
+
+        <span *ngIf="notif.lien" class="indicateur-lien" title="Accéder">
+          <span>Consulter</span>
+          <span class="fleche-lien">→</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

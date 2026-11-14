@@ -1,0 +1,286 @@
+<div class="container page-dashboard">
+  <!-- En-tête de bienvenue -->
+  <div class="en-tete-page">
+    <div class="titres-bloc">
+      <span class="tag-label">ESPACE PERSONNEL BAILLEUR</span>
+      <h1 class="titre-principal">Bonjour, {{ prenom }}</h1>
+      <p class="desc-page">
+        Gérez votre parc de logements étudiants, suivez l'état de modération de vos annonces et répondez aux demandes de colocation.
+      </p>
+    </div>
+
+    <!-- Bouton Publier une annonce avec état désactivé explicatif si non vérifié -->
+    <div class="actions-en-tete">
+      <div class="conteneur-bouton-publier">
+        <a
+          *ngIf="estVerifie"
+          routerLink="/mes-annonces/nouvelle"
+          class="btn btn-primary"
+        >
+          <app-icon name="plus" [size]="16"></app-icon>
+          <span>Publier une annonce</span>
+        </a>
+
+        <div *ngIf="!estVerifie" class="bloc-publication-bloquee">
+          <button
+            type="button"
+            class="btn btn-primary btn-desactive"
+            disabled
+            title="Vérifiez votre profil pour pouvoir publier une annonce"
+          >
+            <app-icon name="plus" [size]="16"></app-icon>
+            <span>Publier une annonce</span>
+          </button>
+          <small class="explication-blocage">
+            <app-icon name="alert" [size]="13"></app-icon>
+            <span>Vérification d'identité requise avant publication.</span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- État de chargement initial -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="cards" [count]="4"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerDonnees()"></app-error-message>
+  </div>
+
+  <ng-container *ngIf="!chargement && !erreur">
+    <!-- 1. Carte de statut de vérification avec prochaine action -->
+    <div class="carte-verification-statut card" [ngClass]="'statut-' + statutVerification">
+      <div class="icone-verif-grand">
+        <app-icon
+          [name]="statutVerification === 'verifie' ? 'shield-check' : (statutVerification === 'refuse' ? 'alert' : 'file')"
+          [size]="28"
+        ></app-icon>
+      </div>
+
+      <div class="contenu-verif-statut">
+        <div class="entete-verif-statut">
+          <span class="titre-verif">Certification du compte propriétaire</span>
+          <app-status-badge [statut]="statutVerification"></app-status-badge>
+        </div>
+
+        <p class="texte-verif" *ngIf="statutVerification === 'non_verifie'">
+          Votre pièce d'identité (CIN) n'a pas encore été transmise. La certification bailleur est obligatoire avant la mise en ligne de vos annonces.
+        </p>
+        <p class="texte-verif" *ngIf="statutVerification === 'en_attente'">
+          Votre pièce d'identité a bien été déposée et est en cours d'analyse par l'administration CampusColoc.
+        </p>
+        <p class="texte-verif" *ngIf="statutVerification === 'verifie'">
+          Votre identité de propriétaire est validée. Vos annonces peuvent être approuvées et publiées immédiatement.
+        </p>
+        <p class="texte-verif" *ngIf="statutVerification === 'refuse'">
+          Votre pièce d'identité a été refusée. Veuillez téléverser une copie lisible pour pouvoir publier vos logements.
+        </p>
+      </div>
+
+      <div class="action-verif">
+        <a
+          *ngIf="statutVerification === 'non_verifie' || statutVerification === 'refuse'"
+          routerLink="/profil"
+          class="btn btn-primary btn-sm"
+        >
+          <app-icon name="upload" [size]="14"></app-icon>
+          <span>{{ statutVerification === 'refuse' ? 'Déposer une nouvelle CIN' : 'Faire vérifier mon compte' }}</span>
+        </a>
+
+        <a
+          *ngIf="statutVerification === 'en_attente' || statutVerification === 'verifie'"
+          routerLink="/profil"
+          class="btn btn-secondary btn-sm"
+        >
+          <app-icon name="user" [size]="14"></app-icon>
+          <span>{{ statutVerification === 'verifie' ? 'Voir mon profil certifié' : 'Suivre ma vérification' }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Lien vers les demandes reçues avec compteur en attente -->
+    <div class="banniere-demandes-recues card">
+      <div class="banniere-gauche">
+        <div class="icone-banniere">
+          <app-icon name="inbox" [size]="20"></app-icon>
+        </div>
+        <div>
+          <span class="tag-label">CANDIDATURES ÉTUDIANTES</span>
+          <h3 class="titre-banniere">
+            Vous avez <strong>{{ nbDemandesEnAttente }}</strong> demande{{ nbDemandesEnAttente > 1 ? 's' : '' }} en attente de réponse
+          </h3>
+        </div>
+      </div>
+      <a routerLink="/demandes" class="btn btn-secondary btn-sm">
+        <span>Consulter les demandes reçues</span>
+        <span class="fleche-lien">→</span>
+      </a>
+    </div>
+
+    <!-- 2. Cartes statistiques (Annonces au total, Publiées, En attente, Suspendues ou refusées) -->
+    <div class="grille-statistiques">
+      <!-- Total -->
+      <div class="card stat-carte">
+        <div class="stat-entete">
+          <span class="tag-label">TOTAL ANNONCES</span>
+          <app-icon name="home" [size]="18"></app-icon>
+        </div>
+        <div class="stat-chiffre tabular-nums">{{ totalAnnonces }}</div>
+        <p class="stat-desc">Logements créés sur la plateforme</p>
+        <a routerLink="/mes-annonces" class="lien-detail">
+          <span>Gérer mes annonces</span>
+          <span class="fleche-lien">→</span>
+        </a>
+      </div>
+
+      <!-- Publiées -->
+      <div class="card stat-carte">
+        <div class="stat-entete">
+          <span class="tag-label">PUBLIÉES</span>
+          <span class="pastille-stat pastille-ok"></span>
+        </div>
+        <div class="stat-chiffre tabular-nums">{{ nbPubliees }}</div>
+        <p class="stat-desc">En ligne et visibles par les étudiants</p>
+        <a routerLink="/mes-annonces" class="lien-detail">
+          <span>Voir les logements en ligne</span>
+          <span class="fleche-lien">→</span>
+        </a>
+      </div>
+
+      <!-- En attente -->
+      <div class="card stat-carte">
+        <div class="stat-entete">
+          <span class="tag-label">EN ATTENTE</span>
+          <span class="pastille-stat pastille-attente"></span>
+        </div>
+        <div class="stat-chiffre tabular-nums">{{ nbEnAttente }}</div>
+        <p class="stat-desc">En cours de contrôle par l'administration</p>
+        <a routerLink="/mes-annonces" class="lien-detail">
+          <span>Suivre la modération</span>
+          <span class="fleche-lien">→</span>
+        </a>
+      </div>
+
+      <!-- Suspendues ou refusées -->
+      <div class="card stat-carte">
+        <div class="stat-entete">
+          <span class="tag-label">SUSPENDUES OU REFUSÉES</span>
+          <span class="pastille-stat pastille-alerte"></span>
+        </div>
+        <div class="stat-chiffre tabular-nums">{{ nbSuspenduesOuRefusees }}</div>
+        <p class="stat-desc">Nécessitent une correction ou réactivation</p>
+        <a routerLink="/mes-annonces" class="lien-detail">
+          <span>Consulter les motifs</span>
+          <span class="fleche-lien">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. Tableau des 5 dernières annonces -->
+    <div class="card bloc-tableau-annonces">
+      <div class="entete-tableau">
+        <div>
+          <span class="tag-label">RÉCENTES</span>
+          <h2 class="titre-bloc">Vos dernières annonces</h2>
+        </div>
+        <a routerLink="/mes-annonces" class="lien-voir-tout" *ngIf="annonces.length > 0">
+          <span>Voir toutes mes annonces ({{ totalAnnonces }})</span>
+          <span class="fleche-lien">→</span>
+        </a>
+      </div>
+
+      <!-- État vide -->
+      <div *ngIf="annonces.length === 0" class="etat-vide-annonces">
+        <app-icon name="home" [size]="32"></app-icon>
+        <p>Vous n'avez pas encore publié de logement sur CampusColoc.</p>
+        <a
+          *ngIf="estVerifie"
+          routerLink="/mes-annonces/nouvelle"
+          class="btn btn-primary btn-sm"
+        >
+          Déposer ma première annonce
+        </a>
+      </div>
+
+      <!-- Table avec les 5 dernières annonces -->
+      <div *ngIf="annonces.length > 0" class="conteneur-table">
+        <table class="table-annonces">
+          <thead>
+            <tr>
+              <th>Logement</th>
+              <th>Localisation</th>
+              <th>Loyer / mois</th>
+              <th>Statut</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of cinqDernieresAnnonces">
+              <!-- Logement (vignette + titre) -->
+              <td class="cellule-logement">
+                <div class="vignette-conteneur">
+                  <img
+                    *ngIf="a.photos && a.photos.length > 0"
+                    [src]="a.photos[0]"
+                    [alt]="a.titre"
+                    class="vignette-annonce"
+                  />
+                  <div *ngIf="!a.photos || a.photos.length === 0" class="vignette-vide">
+                    <app-icon name="camera" [size]="16"></app-icon>
+                  </div>
+                </div>
+                <div class="infos-titre">
+                  <strong class="titre-ligne">{{ a.titre }}</strong>
+                  <span class="places-ligne">{{ a.nombrePlaces }} place{{ a.nombrePlaces > 1 ? 's' : '' }}</span>
+                </div>
+              </td>
+
+              <!-- Localisation -->
+              <td class="cellule-texte">
+                <span>{{ a.ville }}</span>
+                <small *ngIf="a.quartier" class="quartier-texte">({{ a.quartier }})</small>
+              </td>
+
+              <!-- Loyer -->
+              <td class="cellule-loyer">
+                <strong>{{ a.loyer }} DT</strong>
+                <small class="charges-texte">+ {{ a.charges || 0 }} DT charges</small>
+              </td>
+
+              <!-- Statut -->
+              <td>
+                <app-status-badge [statut]="a.statut"></app-status-badge>
+              </td>
+
+              <!-- Actions -->
+              <td class="col-actions">
+                <div class="actions-ligne">
+                  <a
+                    [routerLink]="['/mes-annonces/modifier', a.id]"
+                    class="btn btn-ghost btn-sm btn-action-tab"
+                    title="Modifier l'annonce"
+                  >
+                    <app-icon name="pencil" [size]="14"></app-icon>
+                    <span>Modifier</span>
+                  </a>
+                  <a
+                    *ngIf="a.statut === 'publiee'"
+                    [routerLink]="['/annonces', a.id]"
+                    class="btn btn-ghost btn-sm btn-action-tab"
+                    title="Consulter l'annonce en ligne"
+                  >
+                    <app-icon name="eye" [size]="14"></app-icon>
+                    <span>Voir</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

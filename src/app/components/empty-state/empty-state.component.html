@@ -1,0 +1,13 @@
+<div class="empty-state-card">
+  <div class="icone-conteneur">
+    <app-icon [name]="icone" [size]="28"></app-icon>
+  </div>
+  <h3 class="empty-titre">{{ titre }}</h3>
+  <p *ngIf="description" class="empty-description">{{ description }}</p>
+  <div *ngIf="texteAction" class="empty-actions">
+    <button type="button" class="btn btn-primary btn-sm" (click)="surClicAction()">
+      {{ texteAction }}
+    </button>
+  </div>
+</div>
+

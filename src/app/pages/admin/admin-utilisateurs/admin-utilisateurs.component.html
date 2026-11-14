@@ -1,0 +1,179 @@
+<div class="page-admin">
+  <!-- En-tête de la page -->
+  <div class="en-tete-page">
+    <div>
+      <span class="tag-label">MODÉRATION & GESTION</span>
+      <h2 class="titre-page">Répertoire des utilisateurs</h2>
+      <p class="desc-page">Consultez l'ensemble des comptes inscrits, filtrez par rôle et gérez manuellement leur statut de vérification.</p>
+    </div>
+
+    <div class="compteur-total-badge" *ngIf="!chargement && !erreur">
+      <span class="badge badge-neutral">
+        <strong>{{ totalCount }}</strong> utilisateur{{ totalCount > 1 ? 's' : '' }} inscrits
+      </span>
+    </div>
+  </div>
+
+  <!-- Barre d'outils : recherche et filtres par rôle -->
+  <div class="barre-outils-admin" *ngIf="!chargement && !erreur">
+    <!-- Recherche textuelle -->
+    <div class="champ-recherche-conteneur">
+      <app-icon name="search" [size]="16"></app-icon>
+      <input
+        type="text"
+        class="input-recherche"
+        placeholder="Rechercher par nom ou courriel..."
+        [(ngModel)]="recherche"
+      />
+      <button
+        *ngIf="recherche"
+        type="button"
+        class="btn-effacer-recherche"
+        (click)="recherche = ''"
+        title="Effacer"
+      >
+        <app-icon name="close" [size]="14"></app-icon>
+      </button>
+    </div>
+
+    <!-- Onglets de rôle -->
+    <div class="groupe-onglets-role">
+      <button
+        type="button"
+        class="onglet-role"
+        [class.actif]="filtreRole === 'tous'"
+        (click)="changerFiltreRole('tous')"
+      >
+        <span>Tous</span>
+        <span class="badge-compteur">{{ totalCount }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-role"
+        [class.actif]="filtreRole === 'etudiant'"
+        (click)="changerFiltreRole('etudiant')"
+      >
+        <span>Étudiants</span>
+        <span class="badge-compteur">{{ etudiantCount }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-role"
+        [class.actif]="filtreRole === 'proprietaire'"
+        (click)="changerFiltreRole('proprietaire')"
+      >
+        <span>Propriétaires</span>
+        <span class="badge-compteur">{{ proprietaireCount }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-role"
+        [class.actif]="filtreRole === 'admin'"
+        (click)="changerFiltreRole('admin')"
+      >
+        <span>Admins</span>
+        <span class="badge-compteur">{{ adminCount }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="table" [count]="6"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerUtilisateurs()"></app-error-message>
+  </div>
+
+  <!-- État vide (aucun utilisateur trouvé) -->
+  <div *ngIf="!chargement && !erreur && utilisateursFiltres.length === 0" class="zone-etat">
+    <app-empty-state
+      titre="Aucun utilisateur ne correspond à vos critères"
+      description="Essayez de modifier votre recherche ou de sélectionner un autre rôle."
+      icone="users"
+      texteAction="Réinitialiser les filtres"
+      (action)="reinitialiserFiltres()"
+    ></app-empty-state>
+  </div>
+
+  <!-- Tableau des utilisateurs -->
+  <div *ngIf="!chargement && !erreur && utilisateursFiltres.length > 0" class="card tableau-carte">
+    <div class="table-responsive">
+      <table class="table-admin">
+        <thead>
+          <tr>
+            <th>UTILISATEUR</th>
+            <th>COURRIEL</th>
+            <th>RÔLE</th>
+            <th>DÉTAILS</th>
+            <th>STATUT ACTUEL</th>
+            <th class="col-action-verif">MODIFIER LA VÉRIFICATION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of utilisateursFiltres">
+            <!-- Utilisateur (avatar + nom) -->
+            <td>
+              <div class="cellule-user">
+                <app-avatar [nom]="u.nom" [role]="$any(u.role)" [taille]="32"></app-avatar>
+                <div class="infos-user-nom">
+                  <strong>{{ u.nom }}</strong>
+                  <small *ngIf="u.telephone" class="tel-user">{{ u.telephone }}</small>
+                </div>
+              </div>
+            </td>
+
+            <!-- Courriel -->
+            <td class="cellule-email">
+              <code>{{ u.email }}</code>
+            </td>
+
+            <!-- Rôle -->
+            <td>
+              <span
+                class="badge"
+                [ngClass]="u.role === 'admin' ? 'badge-neutral' : (u.role === 'proprietaire' ? 'badge-warning' : 'badge-primary')"
+              >
+                {{ u.role === 'etudiant' ? 'ÉTUDIANT' : (u.role === 'proprietaire' ? 'PROPRIÉTAIRE' : 'ADMIN') }}
+              </span>
+            </td>
+
+            <!-- Détails (faculté, niveau ou date) -->
+            <td class="cellule-details">
+              <span *ngIf="u.faculte">{{ u.faculte }}</span>
+              <small *ngIf="u.filiere" class="filiere-texte">{{ u.filiere }}</small>
+              <span *ngIf="!u.faculte && !u.filiere" class="texte-vide">-</span>
+            </td>
+
+            <!-- Statut actuel de vérification -->
+            <td>
+              <app-status-badge [statut]="u.statutVerification"></app-status-badge>
+            </td>
+
+            <!-- Action de modification du statut de vérification -->
+            <td class="col-action-verif">
+              <div class="select-wrapper">
+                <select
+                  class="select-statut-verif"
+                  [value]="u.statutVerification"
+                  (change)="changerStatutVerification(u, $event)"
+                  [disabled]="actionEnCours"
+                >
+                  <option value="non_verifie">Non vérifié</option>
+                  <option value="en_attente">En attente</option>
+                  <option value="verifie">Vérifié (Approuver)</option>
+                  <option value="refuse">Refusé</option>
+                </select>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

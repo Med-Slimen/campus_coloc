@@ -1,0 +1,399 @@
+<div class="container page-espace">
+  <!-- État de chargement initial -->
+  <div *ngIf="chargement" class="zone-chargement">
+    <app-loader type="card" [count]="2"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-erreur">
+    <app-error-message [message]="erreur" (reessayer)="chargerEspace(annonceId)"></app-error-message>
+  </div>
+
+  <!-- État d'accès refusé -->
+  <div *ngIf="!chargement && !erreur && accesRefuse" class="zone-erreur card carte-acces-refuse">
+    <div class="icone-refus">
+      <app-icon name="shield-check" [size]="40"></app-icon>
+    </div>
+    <h2>Accès strictement réservé</h2>
+    <p>
+      Cet espace de colocation est privé. Seuls le propriétaire du logement et les colocataires officiellement acceptés ont accès à ce salon.
+    </p>
+    <a routerLink="/annonces" class="btn btn-primary">Explorer les autres annonces</a>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- BANNIÈRE D'INVITATION (Pour l'étudiant invité qui n'a pas encore répondu) -->
+  <!-- ========================================================================= -->
+  <div *ngIf="!chargement && !erreur && estInviteEnAttente" class="banniere-invitation-etudiant card">
+    <div class="contenu-banniere-invit">
+      <app-icon name="users" [size]="24"></app-icon>
+      <div>
+        <strong>Vous êtes invité à rejoindre cette colocation !</strong>
+        <p>Le premier locataire vous propose d'intégrer ce logement partagé.</p>
+      </div>
+    </div>
+    <div class="actions-banniere-invit">
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="repondreMembre(membresDetails[0], 'accepte')"
+        [disabled]="actionEnCours"
+      >
+        <app-icon name="check" [size]="14"></app-icon>
+        <span>Accepter l'invitation</span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        (click)="repondreMembre(membresDetails[0], 'refuse')"
+        [disabled]="actionEnCours"
+      >
+        <app-icon name="close" [size]="14"></app-icon>
+        <span>Refuser</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- CONTENU DE L'ESPACE : DEUX COLONNES (Gauche: détails, Droite: chat)      -->
+  <!-- ========================================================================= -->
+  <div *ngIf="!chargement && !erreur && !accesRefuse && espace && annonce" class="contenu-espace-actif">
+    <!-- En-tête de l'espace -->
+    <header class="en-tete-espace">
+      <div>
+        <div class="ligne-tags-espace">
+          <span class="tag-label">ESPACE DE COLOCATION PRIVÉ</span>
+          <span class="separateur-puce">•</span>
+          <span class="tag-label">{{ annonce.ville | uppercase }}</span>
+        </div>
+        <h1 class="titre-espace">{{ annonce.titre }}</h1>
+        <p class="mention-securite">
+          <app-icon name="shield-check" [size]="14"></app-icon>
+          <span>Espace sécurisé : coordonnées directes et salon de discussion réservés aux colocataires.</span>
+        </p>
+      </div>
+
+      <div class="badges-entete">
+        <!-- Statut Ouvert ou Complet -->
+        <app-status-badge [statut]="espace.statut"></app-status-badge>
+        <!-- Visibilité Privée ou Publique -->
+        <span class="badge" [class.badge-ok]="espace.visibilite === 'public'" [class.badge-neutral]="espace.visibilite === 'prive'">
+          {{ espace.visibilite === 'public' ? 'Colocation Publique' : 'Colocation Privée' }}
+        </span>
+      </div>
+    </header>
+
+    <!-- Grille principale 2 colonnes -->
+    <div class="grille-deux-colonnes">
+      
+      <!-- ===================================================================== -->
+      <!-- COLONNE GAUCHE : DÉTAILS DU LOGEMENT, RÈGLES, MEMBRES & PART DE LOYER -->
+      <!-- ===================================================================== -->
+      <div class="colonne-gauche">
+        
+        <!-- 1. Carte Part de loyer recalculée automatiquement -->
+        <div class="card carte-repartition">
+          <span class="tag-label">DÉCOMPTE INDIVIDUEL DU LOYER</span>
+          <div class="montant-reparti prix">
+            {{ partDeLoyer }} DT <small>/ colocataire / mois</small>
+          </div>
+          <p class="calcul-detaille">
+            Loyer global ({{ annonce.loyer }} DT) + charges estimées ({{ annonce.charges || 0 }} DT)
+            divisés équitablement entre les <strong>{{ membresAcceptes.length }}</strong> colocataire{{ membresAcceptes.length > 1 ? 's' : '' }} actuellement accepté{{ membresAcceptes.length > 1 ? 's' : '' }}.
+          </p>
+        </div>
+
+        <!-- 2. Informations du logement et contact du propriétaire (affiché ici uniquement) -->
+        <div class="card carte-logement-details">
+          <div class="entete-bloc">
+            <span class="tag-label">LOGEMENT & CONTACT BAILLEUR</span>
+          </div>
+
+          <div class="apercu-logement-ligne">
+            <div class="mini-photo-cadre" *ngIf="annonce.photos && annonce.photos.length > 0">
+              <img [src]="annonce.photos[0]" [alt]="annonce.titre" class="mini-photo" />
+            </div>
+            <div class="specs-courtes">
+              <div><strong>{{ annonce.quartier }}, {{ annonce.ville }}</strong></div>
+              <small>{{ annonce.meuble ? 'Entièrement meublé' : 'Non meublé' }} • {{ annonce.dureeLocation || 'Flexible' }}</small>
+              <small class="places-decompte">
+                {{ membresAcceptes.length }} / {{ annonce.nombrePlaces }} places occupées
+              </small>
+            </div>
+          </div>
+
+          <!-- Numéro du propriétaire (AFFICHÉ ICI UNIQUEMENT) -->
+          <div class="encart-telephone-hote">
+            <div class="icone-tel">
+              <app-icon name="user" [size]="18"></app-icon>
+            </div>
+            <div class="tel-infos">
+              <span class="tel-label">NUMÉRO DIRECT DU BAILLEUR (CONFIDENTIEL) :</span>
+              <strong class="tel-valeur prix">{{ proprietaire?.telephone || 'Non renseigné' }}</strong>
+              <small class="tel-aide">Accessible uniquement dans cet espace aux colocataires officiels.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Liste des colocataires acceptés -->
+        <div class="card carte-colocataires">
+          <div class="entete-bloc-colocs">
+            <span class="tag-label">COLOCATAIRES OFFICIELS ({{ membresAcceptes.length }} / {{ annonce.nombrePlaces }})</span>
+          </div>
+
+          <div class="liste-membres-acceptes">
+            <div *ngFor="let m of membresAcceptes" class="membre-ligne">
+              <app-avatar
+                [nom]="m.user?.nom || 'Colocataire'"
+                [photoUrl]="m.user?.photo"
+                [taille]="40"
+                role="etudiant"
+              ></app-avatar>
+
+              <div class="membre-textes">
+                <div class="membre-nom-ligne">
+                  <strong class="nom-membre">{{ m.user?.nom || 'Étudiant' }}</strong>
+                  <!-- Tag 'Premier locataire' -->
+                  <span class="tag-premier-locataire" *ngIf="m.membre.premierLocataire">
+                    Premier locataire
+                  </span>
+                </div>
+                <div class="coordonnees-membre">
+                  <small>{{ m.user?.email }}</small>
+                  <small *ngIf="m.user?.telephone">• {{ m.user?.telephone }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Règles de la maison (Éditables par le premier locataire) -->
+        <div class="card carte-regles-maison">
+          <div class="entete-regles">
+            <span class="tag-label">RÈGLES DE VIE COMMUNE</span>
+            <small class="note-edit-regles" *ngIf="estPremierLocataire">
+              (Éditables par vous en tant que premier locataire)
+            </small>
+          </div>
+
+          <!-- Liste des règles existantes -->
+          <ul class="liste-regles" *ngIf="espace.reglesMaison && espace.reglesMaison.length > 0">
+            <li *ngFor="let r of espace.reglesMaison; let i = index" class="regle-item">
+              <span class="puce-regle">•</span>
+              <span class="texte-regle">{{ r }}</span>
+              <button
+                *ngIf="estPremierLocataire"
+                type="button"
+                class="btn-supprimer-regle"
+                (click)="supprimerRegle(i)"
+                title="Supprimer cette règle"
+              >
+                <app-icon name="trash" [size]="14"></app-icon>
+              </button>
+            </li>
+          </ul>
+
+          <div *ngIf="!espace.reglesMaison || espace.reglesMaison.length === 0" class="regles-vides">
+            <p>Aucune règle particulière n'a encore été définie pour cette colocation.</p>
+          </div>
+
+          <!-- Ajout d'une règle (Premier locataire uniquement) -->
+          <div *ngIf="estPremierLocataire" class="form-ajout-regle">
+            <input
+              type="text"
+              [(ngModel)]="nouvelleRegle"
+              placeholder="Ex : Respect du calme après 22h, roulement pour la vaisselle..."
+              class="input-regle"
+              (keyup.enter)="ajouterRegle()"
+            />
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              (click)="ajouterRegle()"
+              [disabled]="!nouvelleRegle.trim()"
+            >
+              <app-icon name="plus" [size]="14"></app-icon>
+              <span>Ajouter</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. Gestion de la visibilité & invitations (Premier locataire uniquement) -->
+        <div *ngIf="estPremierLocataire" class="card carte-gestion-visibilite">
+          <div class="entete-bloc">
+            <span class="tag-label">PARAMÈTRES D'ADHÉSION & VISIBILITÉ</span>
+          </div>
+
+          <!-- Switch Privé / Public -->
+          <div class="interrupteur-visibilite">
+            <button
+              type="button"
+              class="btn-switch"
+              [class.actif]="espace.visibilite === 'prive'"
+              (click)="basculerVisibilite('prive')"
+              [disabled]="actionEnCours"
+            >
+              <span>Colocation Privée</span>
+            </button>
+            <button
+              type="button"
+              class="btn-switch"
+              [class.actif]="espace.visibilite === 'public'"
+              (click)="basculerVisibilite('public')"
+              [disabled]="actionEnCours"
+            >
+              <span>Colocation Publique</span>
+            </button>
+          </div>
+
+          <!-- Cas Privé : Formulaire d'invitation par email -->
+          <div *ngIf="espace.visibilite === 'prive'" class="bloc-invitation-email">
+            <label for="inputEmailInvit" class="label-invit">Inviter un étudiant certifié par email</label>
+            <p class="desc-invit">
+              Saisissez l'adresse courriel de l'étudiant vérifié avec qui vous souhaitez cohabiter.
+            </p>
+            <div class="champ-invitation">
+              <input
+                id="inputEmailInvit"
+                type="email"
+                [(ngModel)]="emailInvitation"
+                placeholder="etudiant@universite.tn"
+                class="input-invit"
+              />
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                (click)="inviterEtudiant()"
+                [disabled]="invitationEnCours || !emailInvitation.trim()"
+              >
+                <app-icon name="plus" [size]="14"></app-icon>
+                <span>{{ invitationEnCours ? 'Envoi...' : 'Inviter' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cas Public : Message d'information -->
+          <div *ngIf="espace.visibilite === 'public'" class="bloc-info-public">
+            <app-icon name="eye" [size]="18"></app-icon>
+            <p>
+              Votre colocation est visible publiquement sur la page de l'annonce avec le badge « Colocation ouverte ». Les étudiants certifiés peuvent postuler en un clic.
+            </p>
+          </div>
+
+          <!-- Liste des candidatures ou invitations en attente -->
+          <div *ngIf="demandesAdhesionEnAttente.length > 0" class="bloc-candidatures-en-attente">
+            <span class="tag-label">DEMANDES & INVITATIONS EN ATTENTE</span>
+            <div *ngFor="let item of demandesAdhesionEnAttente" class="candidat-item">
+              <div class="candidat-nom-type">
+                <strong>{{ item.user?.nom || 'Étudiant' }}</strong>
+                <small>({{ item.membre.statutAdhesion === 'invite' ? 'Invité' : 'Demande d\'adhésion' }})</small>
+              </div>
+              <div class="candidat-actions">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="repondreMembre(item, 'accepte')"
+                  [disabled]="actionEnCours"
+                >
+                  Accepter
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="repondreMembre(item, 'refuse')"
+                  [disabled]="actionEnCours"
+                >
+                  Refuser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Bouton Quitter la colocation (pour les colocataires membres) -->
+        <div *ngIf="estMembreAccepte && !estProprietaire" class="zone-quitter-coloc">
+          <button
+            type="button"
+            class="btn btn-danger btn-sm w-full"
+            (click)="demanderQuitter()"
+            [disabled]="actionEnCours"
+          >
+            <app-icon name="log-out" [size]="14"></app-icon>
+            <span>Quitter cette colocation</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- COLONNE DROITE : SALON DE DISCUSSION COLLECTIF EN TEMPS RÉEL (onSnapshot) -->
+      <!-- ===================================================================== -->
+      <div class="colonne-droite">
+        <div class="card salon-chat-card">
+          <div class="chat-entete">
+            <div class="chat-titre-ligne">
+              <span class="point-en-ligne"></span>
+              <h3>Discussion collective</h3>
+            </div>
+            <small class="nb-messages">{{ messages.length }} message{{ messages.length > 1 ? 's' : '' }}</small>
+          </div>
+
+          <!-- Zone de défilement des messages -->
+          <div class="chat-messages-zone" #chatZone>
+            <div *ngIf="messages.length === 0" class="chat-vide">
+              <app-icon name="chat" [size]="32"></app-icon>
+              <p>Le salon de discussion est ouvert ! Échangez dès maintenant sur votre emménagement et la vie en colocation.</p>
+            </div>
+
+            <div
+              *ngFor="let msg of messages"
+              class="message-bulle-conteneur"
+              [class.message-moi]="msg.auteurId === authService.currentUser?.uid"
+            >
+              <div class="message-entete-infos">
+                <span class="auteur-nom">{{ msg.auteurNom }}</span>
+                <span class="heure-envoi">{{ msg.dateEnvoi | date:'HH:mm' }}</span>
+              </div>
+              <div class="message-corps-texte">
+                {{ msg.contenu }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Barre de saisie d'un nouveau message -->
+          <div class="chat-saisie-barre">
+            <input
+              type="text"
+              [(ngModel)]="nouveauMessage"
+              placeholder="Écrire un message aux colocataires..."
+              class="input-chat"
+              (keyup.enter)="envoyerMessage()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary btn-sm btn-envoyer-chat"
+              (click)="envoyerMessage()"
+              [disabled]="!nouveauMessage.trim()"
+            >
+              <app-icon name="chat" [size]="14"></app-icon>
+              <span>Envoyer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dialogue de confirmation pour quitter la colocation -->
+  <app-confirm-dialog
+    [ouvert]="dialogQuitterOuvert"
+    titre="Quitter cette colocation"
+    message="Êtes-vous certain de vouloir quitter définitivement cet espace de colocation ? Votre place sera libérée."
+    texteConfirmer="Confirmer mon départ"
+    texteAnnuler="Rester dans la colocation"
+    [dangereux]="true"
+    (confirmer)="confirmerQuitter()"
+    (annuler)="annulerQuitter()"
+  ></app-confirm-dialog>
+</div>

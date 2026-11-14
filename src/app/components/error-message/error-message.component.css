@@ -1,0 +1,48 @@
+.carte-erreur {
+  background-color: #FDF2F1;
+  border: 1.5px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.en-tete-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.icone-erreur {
+  color: var(--danger);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.texte-conteneur {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.statut-danger {
+  color: var(--danger);
+}
+
+.message-erreur {
+  font-size: 0.95rem;
+  color: #721C24;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.action-erreur {
+  display: flex;
+  justify-content: flex-end;
+}
+

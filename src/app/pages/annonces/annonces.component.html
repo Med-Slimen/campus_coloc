@@ -1,0 +1,159 @@
+<div class="container page-annonces">
+  <!-- En-tête de la page -->
+  <div class="en-tete-page">
+    <div class="titres-groupe">
+      <span class="tag-label">LOGEMENTS UNIVERSITAIRES</span>
+      <h1 class="titre-principal">Annonces de colocation</h1>
+      <p class="desc-page">
+        Trouvez votre chambre ou appartement partagé parmi les offres vérifiées par l'équipe CampusColoc.
+      </p>
+    </div>
+
+    <!-- Bouton toggle mobile pour les filtres -->
+    <button
+      type="button"
+      class="btn btn-secondary bouton-toggle-mobile"
+      (click)="toggleFiltresMobile()"
+    >
+      <app-icon name="filter" [size]="16"></app-icon>
+      <span>{{ panneauFiltresMobileOuvert ? 'Masquer les filtres' : 'Filtrer les annonces' }}</span>
+      <span *ngIf="aFiltresActifs" class="pastille-active"></span>
+    </button>
+  </div>
+
+  <!-- Panneau des filtres (collapsible sur mobile via classe CSS) -->
+  <aside class="card panneau-filtres" [class.ouvert-mobile]="panneauFiltresMobileOuvert">
+    <div class="entete-filtres">
+      <div class="titre-filtres-ligne">
+        <app-icon name="filter" [size]="16"></app-icon>
+        <span class="titre-filtres">Filtrer les logements</span>
+      </div>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm btn-reinitialiser"
+        *ngIf="aFiltresActifs"
+        (click)="reinitialiserFiltres()"
+      >
+        <app-icon name="rotate" [size]="14"></app-icon>
+        <span>Réinitialiser</span>
+      </button>
+    </div>
+
+    <div class="grille-filtres">
+      <!-- 1. Gouvernorat (VILLES_TUNISIE, premier choix 'Tous les gouvernorats') -->
+      <div class="champ-filtre">
+        <label for="filtreVille">Gouvernorat</label>
+        <select id="filtreVille" [(ngModel)]="ville" class="select-filtre">
+          <option value="">Tous les gouvernorats</option>
+          <option *ngFor="let v of villes" [value]="v">{{ v }}</option>
+        </select>
+      </div>
+
+      <!-- 2. Quartier (texte libre) -->
+      <div class="champ-filtre">
+        <label for="filtreQuartier">Quartier / Cité</label>
+        <input
+          id="filtreQuartier"
+          type="text"
+          [(ngModel)]="quartier"
+          placeholder="Ex : Centre Urbain Nord, Menzah..."
+          class="input-filtre"
+        />
+      </div>
+
+      <!-- 3. Budget max par personne -->
+      <div class="champ-filtre">
+        <label for="filtreBudget">Budget max / coloc</label>
+        <div class="champ-avec-unite">
+          <input
+            id="filtreBudget"
+            type="number"
+            [(ngModel)]="budgetMax"
+            min="0"
+            step="10"
+            placeholder="Ex : 400"
+            class="input-filtre"
+          />
+          <span class="unite-dt">DT</span>
+        </div>
+      </div>
+
+      <!-- 4. Places minimum -->
+      <div class="champ-filtre">
+        <label for="filtrePlaces">Places minimum</label>
+        <input
+          id="filtrePlaces"
+          type="number"
+          [(ngModel)]="minimumPlaces"
+          min="1"
+          max="10"
+          placeholder="Toutes (ex: 2)"
+          class="input-filtre"
+        />
+      </div>
+
+      <!-- 5. Meublé -->
+      <div class="champ-filtre">
+        <label for="filtreMeuble">Ameublement</label>
+        <select id="filtreMeuble" [(ngModel)]="meuble" class="select-filtre">
+          <option value="peu_importe">Peu importe</option>
+          <option value="oui">Meublé uniquement</option>
+          <option value="non">Non meublé</option>
+        </select>
+      </div>
+
+      <!-- 6. Durée de location -->
+      <div class="champ-filtre">
+        <label for="filtreDuree">Durée de location</label>
+        <select id="filtreDuree" [(ngModel)]="duree" class="select-filtre">
+          <option *ngFor="let opt of optionsDuree" [value]="opt">{{ opt }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Barre de bas de filtres : compteur de résultats, tri et réinitialisation -->
+    <div class="pied-filtres">
+      <div class="compteur-resultats">
+        <strong class="chiffre-resultats">{{ annoncesFiltrees.length }}</strong>
+        <span>logement{{ annoncesFiltrees.length > 1 ? 's' : '' }} disponible{{ annoncesFiltrees.length > 1 ? 's' : '' }}</span>
+      </div>
+
+      <div class="options-tri-groupe">
+        <label for="triAnnonces" class="label-tri">Trier par :</label>
+        <select id="triAnnonces" [(ngModel)]="tri" class="select-tri">
+          <option *ngFor="let opt of optionsTri" [value]="opt.valeur">{{ opt.label }}</option>
+        </select>
+      </div>
+    </div>
+  </aside>
+
+  <!-- État de chargement initial -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="cards" [count]="6"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerDonnees()"></app-error-message>
+  </div>
+
+  <!-- État vide (aucun résultat pour les critères) -->
+  <div *ngIf="!chargement && !erreur && annoncesFiltrees.length === 0" class="zone-etat">
+    <app-empty-state
+      icone="search"
+      titre="Aucun logement correspondant"
+      description="Aucune colocation publiée ne correspond exactement à vos critères. Essayez d'élargir votre budget ou de changer de gouvernorat."
+      texteAction="Réinitialiser tous les filtres"
+      (action)="reinitialiserFiltres()"
+    ></app-empty-state>
+  </div>
+
+  <!-- Grille des annonces -->
+  <div *ngIf="!chargement && !erreur && annoncesFiltrees.length > 0" class="grille-annonces">
+    <app-annonce-card
+      *ngFor="let a of annoncesFiltrees"
+      [annonce]="a"
+      [espacePublicOuvert]="aEspaceOuvert(a.id)"
+    ></app-annonce-card>
+  </div>
+</div>

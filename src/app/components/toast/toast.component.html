@@ -1,0 +1,24 @@
+<div class="toast-container" aria-live="polite">
+  <div
+    *ngFor="let toast of toastService.toasts"
+    class="toast-item"
+    [ngClass]="'toast-' + toast.type"
+    role="status"
+  >
+    <div class="toast-icone">
+      <app-icon [name]="obtenirIcone(toast.type)" [size]="18"></app-icon>
+    </div>
+    <div class="toast-message">
+      {{ toast.message }}
+    </div>
+    <button
+      type="button"
+      class="toast-fermer"
+      aria-label="Fermer la notification"
+      (click)="fermer(toast.id)"
+    >
+      <app-icon name="close" [size]="14"></app-icon>
+    </button>
+  </div>
+</div>
+

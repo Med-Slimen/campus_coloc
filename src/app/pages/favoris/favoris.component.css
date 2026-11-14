@@ -1,0 +1,187 @@
+.page-favoris {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.en-tete-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 18px;
+  border-bottom: var(--border-main);
+  flex-wrap: wrap;
+}
+
+.titres-bloc {
+  flex: 1;
+  min-width: 260px;
+}
+
+.titre-principal {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--ink);
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.desc-page {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  max-width: 650px;
+  margin: 0;
+}
+
+.compteur-favoris {
+  align-self: center;
+}
+
+.zone-etat {
+  margin: 32px 0;
+}
+
+/* Grille des favoris */
+.grille-favoris {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* Bloc d'une annonce publiée */
+.favori-actif-bloc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.btn-retirer-actif {
+  align-self: center;
+  color: var(--ink-soft);
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.btn-retirer-actif:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Carte grisée pour logement qui n'est plus publié */
+.carte-indisponible-grisee {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  background-color: #F2ECE0;
+  border: 1.5px dashed rgba(23, 32, 42, 0.45);
+  border-radius: var(--radius);
+  opacity: 0.88;
+  position: relative;
+}
+
+.visuel-indisponible {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background-color: #E2DBD0;
+  border-bottom: 1.5px dashed rgba(23, 32, 42, 0.35);
+  overflow: hidden;
+}
+
+.img-grisee {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(100%) brightness(0.9);
+}
+
+.placeholder-grise {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(23, 32, 42, 0.3);
+}
+
+.badge-statut-indispo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+}
+
+.corps-indisponible {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.tags-localisation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tag-separateur {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.titre-indisponible {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: rgba(23, 32, 42, 0.7);
+  line-height: 1.35;
+  margin-bottom: 12px;
+}
+
+/* Alerte indisponibilité */
+.alerte-indisponible {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background-color: #FEF3C7;
+  border: 1px solid #D97706;
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #92400E;
+  margin-bottom: 16px;
+}
+
+.alerte-indisponible app-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #D97706;
+}
+
+.texte-motif {
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.pied-indisponible {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(23, 32, 42, 0.2);
+}
+
+.btn-retirer-indispo {
+  color: var(--danger);
+  border-color: rgba(179, 56, 44, 0.4);
+}
+
+.btn-retirer-indispo:hover {
+  background-color: #FCDAD7;
+  border-color: var(--danger);
+}

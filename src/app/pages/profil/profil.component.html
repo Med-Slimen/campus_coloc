@@ -1,0 +1,315 @@
+<div class="container page-profil">
+  <!-- En-tête de la page de profil -->
+  <div class="en-tete-page">
+    <div>
+      <span class="tag-label">COMPTE PERSONNEL</span>
+      <h1 class="titre-profil">Mon Profil</h1>
+    </div>
+    <!-- Badge officiel du statut de vérification -->
+    <app-status-badge [statut]="statutVerification"></app-status-badge>
+  </div>
+
+  <div class="grille-profil">
+    <!-- COLONNE GAUCHE : Photo de profil & Bloc de vérification des pièces -->
+    <div class="colonne-gauche">
+      <!-- 1. Carte Identité & Photo -->
+      <div class="card carte-identite">
+        <div class="avatar-bloc">
+          <app-avatar
+            [nom]="nom"
+            [photoUrl]="photo"
+            [role]="roleActuel"
+            [taille]="88"
+          ></app-avatar>
+
+          <!-- Boutons de gestion de la photo compressée -->
+          <div class="actions-photo">
+            <input
+              type="file"
+              #photoInput
+              hidden
+              accept="image/*"
+              (change)="changerPhoto($event)"
+            />
+            <button
+              type="button"
+              class="btn btn-sm btn-secondary"
+              (click)="photoInput.click()"
+              [disabled]="chargementPhoto"
+            >
+              <app-icon name="camera" [size]="14"></app-icon>
+              <span>{{ photo ? 'Changer' : 'Ajouter photo' }}</span>
+            </button>
+            <button
+              *ngIf="photo"
+              type="button"
+              class="btn btn-sm btn-ghost btn-supprimer-photo"
+              (click)="supprimerPhoto()"
+              title="Supprimer la photo"
+            >
+              <app-icon name="trash" [size]="14"></app-icon>
+            </button>
+          </div>
+        </div>
+
+        <h3 class="nom-utilisateur">{{ nom || 'Utilisateur' }}</h3>
+        <span class="badge badge-neutral role-etiquette">{{ roleActuel | uppercase }}</span>
+        <p class="email-desc">{{ email }}</p>
+      </div>
+
+      <!-- 2. Carte Vérification d'identité (Carte étudiante ou CIN) -->
+      <div class="card carte-verification">
+        <div class="entete-verification">
+          <div>
+            <span class="tag-label">JUSTIFICATIF OFFICIEL</span>
+            <h3 class="titre-bloc-verif">Vérification du profil</h3>
+          </div>
+          <app-status-badge [statut]="statutVerification"></app-status-badge>
+        </div>
+
+        <!-- Cas A : Compte non vérifié OU mode nouveau dépôt après refus -->
+        <div *ngIf="statutVerification === 'non_verifie' || nouveauDepotActif" class="bloc-form-verif">
+          <p class="consigne-verif">
+            {{ roleActuel === 'etudiant'
+              ? 'Pour certifier votre profil et envoyer des demandes de colocation, transmettez une photo lisible de votre carte étudiante ou de votre CIN.'
+              : 'Pour publier des offres de logement en toute confiance, déposez une photo nette de votre CIN.'
+            }}
+          </p>
+
+          <!-- Choix du type de pièce pour étudiant (propriétaire limité à la CIN) -->
+          <div class="form-group" *ngIf="roleActuel === 'etudiant'">
+            <label for="typePieceSelect">TYPE DE DOCUMENT</label>
+            <select id="typePieceSelect" [(ngModel)]="typePiece">
+              <option value="carte_etudiante">Carte d'étudiant universitaire</option>
+              <option value="cin">Carte d'Identité Nationale (CIN)</option>
+            </select>
+          </div>
+
+          <div class="mention-type-fixe" *ngIf="roleActuel === 'proprietaire'">
+            <span class="tag-label">DOCUMENT REQUIS :</span>
+            <strong>Carte d'Identité Nationale (CIN)</strong>
+          </div>
+
+          <!-- Zone de sélection de fichier -->
+          <div class="zone-depot-fichier">
+            <input
+              type="file"
+              #docInput
+              hidden
+              accept="image/*"
+              (change)="choisirJustificatif($event)"
+            />
+
+            <button
+              type="button"
+              class="btn btn-secondary w-full btn-choisir-doc"
+              (click)="docInput.click()"
+              [disabled]="chargementVerification"
+            >
+              <app-icon name="upload" [size]="16"></app-icon>
+              <span>{{ nomFichierJustificatif ? 'Remplacer l’image' : 'Importer une photo du document' }}</span>
+            </button>
+
+            <!-- Aperçu de l'image sélectionnée avant envoi -->
+            <div *ngIf="justificatifBase64" class="apercu-avant-envoi">
+              <img [src]="justificatifBase64" alt="Aperçu document" class="miniature-justif" />
+              <div class="info-miniature">
+                <span class="nom-fichier">{{ nomFichierJustificatif }}</span>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="annulerSelectionJustificatif()">
+                  <app-icon name="close" [size]="14"></app-icon>
+                  <span>Retirer</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="erreurVerification" class="field-error">
+            <app-icon name="alert" [size]="16"></app-icon>
+            <span>{{ erreurVerification }}</span>
+          </div>
+
+          <!-- Bouton de soumission du justificatif -->
+          <button
+            type="button"
+            class="btn btn-primary w-full"
+            [disabled]="!justificatifBase64 || chargementVerification"
+            (click)="envoyerVerification()"
+          >
+            <app-icon name="check" [size]="16"></app-icon>
+            <span>{{ chargementVerification ? 'Envoi en cours...' : 'Soumettre pour vérification' }}</span>
+          </button>
+        </div>
+
+        <!-- Cas B : Statut en attente -->
+        <div *ngIf="statutVerification === 'en_attente' && !nouveauDepotActif" class="etat-attente">
+          <div class="alerte-encadree alerte-attente">
+            <app-icon name="clock" [size]="20"></app-icon>
+            <div>
+              <strong>Dossier en cours d'examen</strong>
+              <p>Votre document a bien été reçu et est en cours d'examen par nos modérateurs (délai habituel : moins de 24h).</p>
+            </div>
+          </div>
+
+          <!-- Aperçu confidentiel réservé au titulaire du compte -->
+          <div class="apercu-piece-proprietaire" *ngIf="derniereVerification?.fichier">
+            <span class="tag-label">APERÇU DE VOTRE DOCUMENT TRANSMIS</span>
+            <img [src]="derniereVerification?.fichier" alt="Document d'identité" class="image-piece-client" />
+            <span class="mention-privee">
+              <app-icon name="shield-check" [size]="14"></app-icon>
+              <span>Visible uniquement par vous et l'équipe CampusColoc.</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Cas C : Statut vérifié -->
+        <div *ngIf="statutVerification === 'verifie' && !nouveauDepotActif" class="etat-valide">
+          <div class="alerte-encadree alerte-succes">
+            <app-icon name="check" [size]="20"></app-icon>
+            <div>
+              <strong>Compte certifié</strong>
+              <p>Votre document a été validé. Vous bénéficiez de l'accès illimité à l'ensemble des services de la plateforme.</p>
+            </div>
+          </div>
+
+          <!-- Aperçu de la pièce validée -->
+          <div class="apercu-piece-proprietaire" *ngIf="derniereVerification?.fichier">
+            <span class="tag-label">DOCUMENT VALIDÉ</span>
+            <img [src]="derniereVerification?.fichier" alt="Document certifié" class="image-piece-client" />
+          </div>
+        </div>
+
+        <!-- Cas D : Statut refusé -->
+        <div *ngIf="statutVerification === 'refuse' && !nouveauDepotActif" class="etat-refus">
+          <div class="alerte-encadree alerte-refus">
+            <app-icon name="alert" [size]="20"></app-icon>
+            <div>
+              <strong>Document refusé</strong>
+              <p class="motif-texte">
+                <strong>Motif :</strong>
+                {{ derniereVerification?.motifRefus || 'La pièce transmise n\'est pas lisible ou ne correspond pas au profil.' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Aperçu de la pièce refusée -->
+          <div class="apercu-piece-proprietaire" *ngIf="derniereVerification?.fichier">
+            <span class="tag-label">DOCUMENT REFUSÉ</span>
+            <img [src]="derniereVerification?.fichier" alt="Document refusé" class="image-piece-client image-refusee" />
+          </div>
+
+          <!-- Bouton pour déposer un nouveau document -->
+          <button type="button" class="btn btn-primary w-full" (click)="activerNouveauDepot()">
+            <app-icon name="upload" [size]="16"></app-icon>
+            <span>Déposer un nouveau document</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE : Coordonnées et cursus -->
+    <div class="colonne-droite">
+      <div class="card carte-formulaire">
+        <div class="entete-formulaire">
+          <span class="tag-label">RENSEIGNEMENTS PERSONNELS</span>
+          <h2 class="titre-formulaire">Coordonnées et Cursus</h2>
+        </div>
+
+        <form (ngSubmit)="enregistrerProfil()" class="formulaire-profil">
+          <div *ngIf="erreurProfil" class="field-error">
+            <app-icon name="alert" [size]="16"></app-icon>
+            <span>{{ erreurProfil }}</span>
+          </div>
+
+          <!-- Nom et prénom -->
+          <div class="form-group">
+            <label for="nomInput">NOM ET PRÉNOM</label>
+            <input
+              type="text"
+              id="nomInput"
+              name="nom"
+              [(ngModel)]="nom"
+              placeholder="Ex. Youssef Trabelsi"
+              required
+            />
+          </div>
+
+          <!-- Adresse email (lecture seule) -->
+          <div class="form-group">
+            <label for="emailInput">ADRESSE COURRIEL (NON MODIFIABLE)</label>
+            <input
+              type="email"
+              id="emailInput"
+              [value]="email"
+              disabled
+              class="input-lecture-seule"
+            />
+          </div>
+
+          <!-- Numéro de téléphone au format tunisien (+216 XX XXX XXX) -->
+          <div class="form-group">
+            <label for="telInput">NUMÉRO DE TÉLÉPHONE (FORMAT TUNISIEN)</label>
+            <input
+              type="tel"
+              id="telInput"
+              name="telephone"
+              [(ngModel)]="telephone"
+              (blur)="onTelephoneChange()"
+              placeholder="+216 20 123 456"
+              required
+            />
+            <small class="aide-saisie">Format attendu : +216 XX XXX XXX</small>
+          </div>
+
+          <!-- Section spécifique aux étudiants : Faculté, Niveau, Filière -->
+          <ng-container *ngIf="roleActuel === 'etudiant'">
+            <div class="separateur-section">
+              <span class="tag-label">PARCOURS UNIVERSITAIRE</span>
+            </div>
+
+            <!-- Établissement / Faculté -->
+            <div class="form-group">
+              <label for="facInput">ÉTABLISSEMENT / FACULTÉ</label>
+              <input
+                type="text"
+                id="facInput"
+                name="faculte"
+                [(ngModel)]="faculte"
+                placeholder="Ex. ENIT, INSAT, Faculté des Sciences de Tunis, ISG..."
+              />
+            </div>
+
+            <!-- Niveau d'études -->
+            <div class="form-group">
+              <label for="niveauSelect">NIVEAU D'ÉTUDES</label>
+              <select id="niveauSelect" name="niveau" [(ngModel)]="niveau">
+                <option *ngFor="let niv of niveauxEtudes" [value]="niv">{{ niv }}</option>
+              </select>
+            </div>
+
+            <!-- Filière -->
+            <div class="form-group">
+              <label for="filInput">FILIÈRE OU SPÉCIALITÉ</label>
+              <input
+                type="text"
+                id="filInput"
+                name="filiere"
+                [(ngModel)]="filiere"
+                placeholder="Ex. Génie Logiciel, Électromécanique, Gestion, Droit..."
+              />
+            </div>
+          </ng-container>
+
+          <!-- Bouton de validation -->
+          <button
+            type="submit"
+            class="btn btn-primary btn-enregistrer"
+            [disabled]="chargementProfil"
+          >
+            <app-icon *ngIf="!chargementProfil" name="check" [size]="16"></app-icon>
+            <span>{{ chargementProfil ? 'Enregistrement en cours...' : 'Enregistrer les modifications' }}</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

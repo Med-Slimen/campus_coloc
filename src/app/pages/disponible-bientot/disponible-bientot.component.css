@@ -1,0 +1,54 @@
+.conteneur-bientot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 16px;
+  min-height: calc(100vh - 200px);
+}
+
+.carte-bientot {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 24px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.icone-bientot {
+  width: 72px;
+  height: 72px;
+  background-color: #FFF3D6;
+  border: var(--border-main);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warn);
+}
+
+.titre-bientot {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.description-bientot {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.actions-bientot {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+

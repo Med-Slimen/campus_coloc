@@ -1,0 +1,64 @@
+.bandeau-verification {
+  background-color: #FDF0D5;
+  border-bottom: var(--border-main);
+  padding: 10px 0;
+  color: var(--ink);
+}
+
+.bandeau-attente {
+  background-color: #FDF6E3;
+}
+
+.bandeau-refuse {
+  background-color: #FCDAD7;
+}
+
+.contenu-bandeau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.info-gauche {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.icone-bouclier {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warn);
+  flex-shrink: 0;
+}
+
+.bandeau-refuse .icone-bouclier {
+  color: var(--danger);
+}
+
+.statut-titre {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.texte-bandeau {
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--ink);
+}
+
+.action-droite {
+  flex-shrink: 0;
+}
+

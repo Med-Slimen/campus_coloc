@@ -1,0 +1,231 @@
+<div class="container page-demandes">
+  <!-- En-tête de la page -->
+  <div class="en-tete-page">
+    <div class="titres-bloc">
+      <span class="tag-label">{{ estProprietaire ? 'GESTION LOCATIVE' : 'SUIVI DE CANDIDATURES' }}</span>
+      <h1 class="titre-principal">
+        {{ estProprietaire ? 'Demandes Reçues' : 'Mes Demandes' }}
+      </h1>
+      <p class="desc-page">
+        {{ estProprietaire
+          ? 'Consultez les candidatures étudiantes déposées pour vos logements et gérez les acceptations.'
+          : 'Suivez le statut de vos demandes de colocation envoyées aux bailleurs.' }}
+      </p>
+    </div>
+
+    <!-- Compteur -->
+    <div class="compteur-demandes" *ngIf="!chargement && !erreur">
+      <span class="badge badge-neutral">
+        {{ estProprietaire ? demandesProprietaire.length : demandesEtudiant.length }}
+        demande{{ (estProprietaire ? demandesProprietaire.length : demandesEtudiant.length) > 1 ? 's' : '' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="cards" [count]="3"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerDemandes()"></app-error-message>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. VUE ÉTUDIANT : MES DEMANDES (Titre annonce, date, StatusBadge, Annuler) -->
+  <!-- ========================================================================= -->
+  <ng-container *ngIf="!chargement && !erreur && !estProprietaire">
+    <!-- État vide étudiant -->
+    <div *ngIf="demandesEtudiant.length === 0" class="zone-etat">
+      <app-empty-state
+        titre="Vous n'avez envoyé aucune demande"
+        description="Parcourez les offres de logements étudiants et cliquez sur « Je suis intéressé » pour postuler auprès d'un bailleur."
+        icone="inbox"
+        texteAction="Rechercher une colocation"
+        (action)="naviguerVersAnnonces()"
+      ></app-empty-state>
+    </div>
+
+    <!-- Liste des demandes de l'étudiant -->
+    <div *ngIf="demandesEtudiant.length > 0" class="liste-cartes-demandes">
+      <div *ngFor="let item of demandesEtudiant" class="card carte-demande-etudiant">
+        <div class="entete-demande-etudiant">
+          <div>
+            <div class="localisation-et-date">
+              <span class="tag-label" *ngIf="item.annonceVille">{{ item.annonceVille | uppercase }}</span>
+              <span class="separateur-puce" *ngIf="item.annonceVille">•</span>
+              <span class="date-envoi">
+                Envoyée le {{ item.demande.dateEnvoi | date:'dd/MM/yyyy à HH:mm' }}
+              </span>
+            </div>
+            <h2 class="titre-logement-demande">
+              <a [routerLink]="['/annonces', item.demande.annonceId]" class="lien-titre">
+                {{ item.annonceTitre }}
+              </a>
+            </h2>
+          </div>
+
+          <!-- Statut de la demande -->
+          <div class="statut-badge-bloc">
+            <app-status-badge [statut]="item.demande.statut"></app-status-badge>
+          </div>
+        </div>
+
+        <!-- Message transmis si disponible -->
+        <div *ngIf="item.demande.message" class="encart-message-etudiant">
+          <span class="label-message-transmis">Votre message :</span>
+          <p class="texte-message">« {{ item.demande.message }} »</p>
+        </div>
+
+        <!-- Pied de la carte : Bouton Annuler uniquement si en_attente -->
+        <div class="pied-demande-etudiant">
+          <button
+            *ngIf="item.demande.statut === 'en_attente'"
+            type="button"
+            class="btn btn-secondary btn-sm btn-annuler-demande"
+            (click)="annulerDemande(item)"
+            [disabled]="actionEnCours"
+            title="Annuler ma demande"
+          >
+            <app-icon name="close" [size]="14"></app-icon>
+            <span>Annuler</span>
+          </button>
+
+          <!-- Bouton vers le logement -->
+          <a
+            [routerLink]="['/annonces', item.demande.annonceId]"
+            class="btn btn-ghost btn-sm"
+          >
+            <app-icon name="eye" [size]="14"></app-icon>
+            <span>Consulter l'annonce</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ========================================================================= -->
+  <!-- 2. VUE PROPRIÉTAIRE : DEMANDES REÇUES                                      -->
+  <!-- (Nom étudiant, fac, niveau, filière, 'Étudiant vérifié', message, Accepter, Refuser) -->
+  <!-- ========================================================================= -->
+  <ng-container *ngIf="!chargement && !erreur && estProprietaire">
+    <!-- État vide propriétaire -->
+    <div *ngIf="demandesProprietaire.length === 0" class="zone-etat">
+      <app-empty-state
+        titre="Aucune demande reçue"
+        description="Vous n'avez reçu aucune candidature pour vos logements pour l'instant. Vos futures demandes apparaîtront ici."
+        icone="inbox"
+      ></app-empty-state>
+    </div>
+
+    <!-- Liste des demandes reçues par le propriétaire -->
+    <div *ngIf="demandesProprietaire.length > 0" class="liste-cartes-demandes">
+      <div *ngFor="let item of demandesProprietaire" class="card carte-demande-proprietaire">
+        <!-- En-tête : Informations sur l'étudiant candidat -->
+        <div class="entete-demande-proprietaire">
+          <div class="profil-candidat-ligne">
+            <app-avatar
+              [nom]="item.etudiant?.nom || 'Étudiant'"
+              [photoUrl]="item.etudiant?.photo"
+              [taille]="48"
+              role="etudiant"
+            ></app-avatar>
+
+            <div class="details-candidat">
+              <div class="nom-et-badge">
+                <h2 class="nom-candidat">{{ item.etudiant?.nom || 'Étudiant candidat' }}</h2>
+                <!-- Badge 'Étudiant vérifié' -->
+                <span
+                  class="badge badge-ok badge-etudiant-verifie"
+                  *ngIf="item.etudiant?.statutVerification === 'verifie'"
+                >
+                  <app-icon name="shield-check" [size]="13"></app-icon>
+                  <span>Étudiant vérifié</span>
+                </span>
+                <span
+                  class="badge badge-warn badge-etudiant-non-verifie"
+                  *ngIf="item.etudiant && item.etudiant.statutVerification !== 'verifie'"
+                >
+                  Profil en attente de vérification
+                </span>
+              </div>
+
+              <!-- Cursus universitaire : Faculté, Niveau, Filière -->
+              <div class="cursus-universitaire">
+                <span class="cursus-element">
+                  <app-icon name="home" [size]="13"></app-icon>
+                  <span>{{ item.etudiant?.faculte || 'Faculté non renseignée' }}</span>
+                </span>
+                <span class="separateur-puce">•</span>
+                <span class="cursus-element">
+                  <span>{{ item.etudiant?.niveau || 'Niveau non précisé' }}</span>
+                </span>
+                <span class="separateur-puce" *ngIf="item.etudiant?.filiere">•</span>
+                <span class="cursus-element" *ngIf="item.etudiant?.filiere">
+                  <span>{{ item.etudiant?.filiere }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statut actuel de la demande -->
+          <div class="statut-badge-bloc">
+            <app-status-badge [statut]="item.demande.statut"></app-status-badge>
+          </div>
+        </div>
+
+        <div class="separateur-ligne"></div>
+
+        <!-- Logement visé et date -->
+        <div class="logement-concerne-ligne">
+          <span class="tag-label">LOGEMENT VISÉ :</span>
+          <a [routerLink]="['/annonces', item.demande.annonceId]" class="lien-logement-vise">
+            {{ item.annonceTitre }}
+          </a>
+          <span class="date-envoi-discret">
+            (Reçue le {{ item.demande.dateEnvoi | date:'dd/MM/yyyy à HH:mm' }})
+          </span>
+        </div>
+
+        <!-- Message rédigé par l'étudiant -->
+        <div class="bloc-message-candidat">
+          <span class="tag-label">MESSAGE DE L'ÉTUDIANT :</span>
+          <p class="texte-message-recu">
+            {{ item.demande.message || 'Aucun message particulier transmis avec cette demande.' }}
+          </p>
+        </div>
+
+        <!-- Actions : Boutons Accepter et Refuser tant que la demande est en_attente -->
+        <div class="pied-demande-proprietaire">
+          <div class="actions-decision" *ngIf="item.demande.statut === 'en_attente'">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="accepterDemande(item)"
+              [disabled]="actionEnCours"
+            >
+              <app-icon name="check" [size]="14"></app-icon>
+              <span>Accepter</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="refuserDemande(item)"
+              [disabled]="actionEnCours"
+            >
+              <app-icon name="close" [size]="14"></app-icon>
+              <span>Refuser</span>
+            </button>
+          </div>
+
+          <!-- Message si déjà traitée -->
+          <span *ngIf="item.demande.statut !== 'en_attente'" class="statut-decision-note">
+            Candidature traitée ({{ item.demande.statut }})
+          </span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

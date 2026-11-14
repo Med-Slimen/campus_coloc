@@ -1,0 +1,693 @@
+.page-espace {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.zone-chargement,
+.zone-erreur {
+  margin: 36px 0;
+}
+
+.carte-acces-refuse {
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 540px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.icone-refus {
+  color: var(--danger);
+}
+
+/* Bannière d'invitation pour étudiant */
+.banniere-invitation-etudiant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background-color: #EFF6FF;
+  border-color: var(--blue);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.contenu-banniere-invit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--blue-dark);
+}
+
+.contenu-banniere-invit p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #334155;
+}
+
+.actions-banniere-invit {
+  display: flex;
+  gap: 10px;
+}
+
+/* En-tête de l'espace */
+.en-tete-espace {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: var(--border-main);
+  flex-wrap: wrap;
+}
+
+.ligne-tags-espace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.separateur-puce {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.titre-espace {
+  font-family: var(--font-heading);
+  font-size: 2.15rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.mention-securite {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.badges-entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Grille 2 colonnes (Empilée sur mobile) */
+.grille-deux-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* Colonne gauche */
+.colonne-gauche {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 1. Carte répartition loyer */
+.carte-repartition {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.montant-reparti {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--blue);
+  margin: 6px 0 8px;
+  line-height: 1;
+}
+
+.montant-reparti small {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.calcul-detaille {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 2. Logement et contact propriétaire */
+.carte-logement-details {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.entete-bloc {
+  margin-bottom: 14px;
+}
+
+.apercu-logement-ligne {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.mini-photo-cadre {
+  width: 90px;
+  height: 64px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: #E2DBD0;
+  flex-shrink: 0;
+}
+
+.mini-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.specs-courtes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.places-decompte {
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.encart-telephone-hote {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #EFF6FF;
+  border: 1.5px solid var(--blue);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.icone-tel {
+  color: var(--blue);
+  margin-top: 2px;
+}
+
+.tel-infos {
+  display: flex;
+  flex-direction: column;
+}
+
+.tel-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--blue-dark);
+}
+
+.tel-valeur {
+  font-size: 1.25rem;
+  color: var(--blue-dark);
+  margin: 2px 0 4px;
+}
+
+.tel-aide {
+  font-size: 11px;
+  color: #64748B;
+}
+
+/* 3. Colocataires acceptés */
+.carte-colocataires {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.entete-bloc-colocs {
+  margin-bottom: 16px;
+}
+
+.liste-membres-acceptes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.membre-ligne {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(23, 32, 42, 0.15);
+}
+
+.membre-ligne:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.membre-textes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.membre-nom-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nom-membre {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.tag-premier-locataire {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: #FDE8A4;
+  color: #634300;
+  border: 1px solid #634300;
+  border-radius: 4px;
+}
+
+.coordonnees-membre {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* 4. Règles de la maison */
+.carte-regles-maison {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.entete-regles {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.note-edit-regles {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.liste-regles {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.regle-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  background-color: #FFFFFF;
+  padding: 8px 12px;
+  border: 1px solid rgba(23, 32, 42, 0.15);
+  border-radius: var(--radius);
+}
+
+.puce-regle {
+  color: var(--blue);
+  font-weight: bold;
+}
+
+.texte-regle {
+  flex: 1;
+}
+
+.btn-supprimer-regle {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-supprimer-regle:hover {
+  color: var(--danger);
+}
+
+.regles-vides {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.form-ajout-regle {
+  display: flex;
+  gap: 8px;
+}
+
+.input-regle {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+}
+
+/* 5. Gestion de la visibilité & invitations */
+.carte-gestion-visibilite {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.interrupteur-visibilite {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  background-color: #EAE3D4;
+  padding: 4px;
+  border-radius: var(--radius);
+  border: var(--border-main);
+}
+
+.btn-switch {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-switch.actif {
+  background-color: #FFFFFF;
+  color: var(--ink);
+  box-shadow: 1px 1px 0 var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.bloc-invitation-email {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.label-invit {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.desc-invit {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+
+.champ-invitation {
+  display: flex;
+  gap: 8px;
+}
+
+.input-invit {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 8px 12px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+}
+
+.bloc-info-public {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius);
+  padding: 12px;
+  color: #334155;
+  margin-bottom: 16px;
+}
+
+.bloc-info-public p {
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.bloc-candidatures-en-attente {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(23, 32, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.candidat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: #FFFFFF;
+  padding: 8px 12px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+}
+
+.candidat-nom-type strong {
+  display: block;
+  font-size: 13px;
+}
+
+.candidat-nom-type small {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.candidat-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* 6. Quitter la colocation */
+.zone-quitter-coloc {
+  margin-top: 6px;
+}
+
+/* ========================================================================= */
+/* COLONNE DROITE : SALON DE CHAT LIVE (onSnapshot)                          */
+/* ========================================================================= */
+.colonne-droite {
+  position: sticky;
+  top: 24px;
+}
+
+.salon-chat-card {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset);
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.chat-entete {
+  padding: 14px 18px;
+  border-bottom: var(--border-main);
+  background-color: #FAF6EE;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-titre-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.point-en-ligne {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--ok);
+  box-shadow: 0 0 0 2px rgba(47, 125, 79, 0.2);
+}
+
+.chat-titre-ligne h3 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.nb-messages {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.chat-messages-zone {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #FDFBF7;
+}
+
+.chat-vide {
+  margin: auto;
+  text-align: center;
+  max-width: 260px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-bulle-conteneur {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+  align-self: flex-start;
+}
+
+.message-entete-infos {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+  padding: 0 4px;
+}
+
+.auteur-nom {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.heure-envoi {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.message-corps-texte {
+  background-color: #FFFFFF;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  word-break: break-word;
+  box-shadow: 1px 1px 0 rgba(23, 32, 42, 0.15);
+}
+
+/* Messages propres de l'utilisateur connecté */
+.message-bulle-conteneur.message-moi {
+  align-self: flex-end;
+}
+
+.message-bulle-conteneur.message-moi .message-entete-infos {
+  justify-content: flex-end;
+}
+
+.message-bulle-conteneur.message-moi .message-corps-texte {
+  background-color: #EFF6FF;
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+/* Barre de saisie */
+.chat-saisie-barre {
+  padding: 12px;
+  border-top: var(--border-main);
+  background-color: #FFFFFF;
+  display: flex;
+  gap: 8px;
+}
+
+.input-chat {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 12px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  outline: none;
+}
+
+.input-chat:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(29, 78, 158, 0.2);
+}
+
+.btn-envoyer-chat {
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .grille-deux-colonnes {
+    grid-template-columns: 1fr;
+  }
+
+  .colonne-droite {
+    position: static;
+  }
+
+  .salon-chat-card {
+    height: 480px;
+  }
+}

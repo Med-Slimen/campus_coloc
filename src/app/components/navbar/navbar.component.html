@@ -1,0 +1,275 @@
+<header class="barre-navigation">
+  <div class="container contenu-nav">
+    <!-- Logo CampusColoc -->
+    <a routerLink="/" class="logo-campus" (click)="fermerMenus()">
+      <span class="logo-carre">C</span>
+      <span class="logo-texte">CampusColoc</span>
+      <span *ngIf="roleActif === 'admin'" class="badge badge-neutral badge-admin">ADMIN</span>
+    </a>
+
+    <!-- Liens de navigation écran large (Desktop) -->
+    <nav class="liens-desktop">
+      <!-- 1. Version VISITEUR -->
+      <ng-container *ngIf="roleActif === 'visiteur'">
+        <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+        <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
+        <a routerLink="/" fragment="comment-ca-marche">Comment ça marche</a>
+        <a routerLink="/connexion" class="btn btn-secondary btn-sm">Connexion</a>
+        <a routerLink="/inscription" class="btn btn-primary btn-sm">Créer un compte</a>
+      </ng-container>
+
+      <!-- 2. Utilisateur connecté (Étudiant, Propriétaire, Admin) -->
+      <ng-container *ngIf="roleActif !== 'visiteur'">
+        <!-- Navigation Étudiant -->
+        <ng-container *ngIf="roleActif === 'etudiant'">
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
+          <a routerLink="/etudiant" routerLinkActive="lien-actif">Mon espace</a>
+          <a routerLink="/favoris" routerLinkActive="lien-actif">Mes favoris</a>
+          <a routerLink="/demandes" routerLinkActive="lien-actif">Mes demandes</a>
+        </ng-container>
+
+        <!-- Navigation Propriétaire -->
+        <ng-container *ngIf="roleActif === 'proprietaire'">
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
+          <a routerLink="/proprietaire" routerLinkActive="lien-actif">Mon espace</a>
+          <a routerLink="/mes-annonces" routerLinkActive="lien-actif">Mes annonces</a>
+          <a routerLink="/demandes" routerLinkActive="lien-actif">Demandes reçues</a>
+        </ng-container>
+
+        <!-- Navigation Admin -->
+        <ng-container *ngIf="roleActif === 'admin'">
+          <a routerLink="/" routerLinkActive="lien-actif" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+          <a routerLink="/annonces" routerLinkActive="lien-actif">Annonces</a>
+          <a routerLink="/admin/tableau-de-bord" class="btn btn-primary btn-sm">
+            <app-icon name="dashboard" [size]="15"></app-icon>
+            <span>Tableau de bord</span>
+          </a>
+        </ng-container>
+
+        <!-- Cloche de notifications avec compteur non lues -->
+        <div class="menu-notifications-conteneur">
+          <button
+            type="button"
+            class="btn-icone-nav"
+            title="Notifications"
+            aria-label="Notifications"
+            (click)="basculerMenuNotifications($event)"
+          >
+            <app-icon name="bell" [size]="18"></app-icon>
+            <span *ngIf="nbNonLues > 0" class="badge-notif-bulle">{{ nbNonLues }}</span>
+          </button>
+
+          <!-- Menu déroulant des 10 dernières notifications -->
+          <div *ngIf="menuNotificationsOuvert" class="menu-deroulant-notifs card" (click)="$event.stopPropagation()">
+            <div class="menu-deroulant-entete">
+              <div class="entete-gauche">
+                <span class="tag-label">NOTIFICATIONS</span>
+                <small *ngIf="nbNonLues > 0" class="badge-compteur-non-lues">{{ nbNonLues }} non lue{{ nbNonLues > 1 ? 's' : '' }}</small>
+              </div>
+              <button
+                *ngIf="nbNonLues > 0"
+                type="button"
+                class="btn-tout-lire"
+                (click)="marquerToutCommeLu()"
+                title="Marquer toutes les notifications comme lues"
+              >
+                Tout marquer lu
+              </button>
+            </div>
+
+            <!-- État chargement -->
+            <div *ngIf="chargementNotifications" class="chargement-notifs-texte">
+              <small>Chargement des notifications...</small>
+            </div>
+
+            <!-- État vide -->
+            <div *ngIf="!chargementNotifications && notifications.length === 0" class="notifs-vides">
+              <p>Aucune notification pour le moment.</p>
+            </div>
+
+            <!-- Liste des 10 dernières notifications -->
+            <div *ngIf="!chargementNotifications && notifications.length > 0" class="liste-notifs-items">
+              <div
+                *ngFor="let notif of dixDernieresNotifications"
+                class="item-notification"
+                [class.non-lue]="!notif.lue"
+              >
+                <div class="item-notif-corps" (click)="cliquerNotification(notif)">
+                  <div class="icone-notif-mini">
+                    <app-icon [name]="getIconeNotif(notif.type)" [size]="14"></app-icon>
+                  </div>
+                  <div class="texte-notif-clic">
+                    <p class="contenu-notif">{{ notif.contenu }}</p>
+                    <small class="date-notif">{{ notif.dateEnvoi | date:'dd/MM à HH:mm' }}</small>
+                  </div>
+                  <span *ngIf="!notif.lue" class="pastille-non-lue" title="Notification non lue"></span>
+                </div>
+
+                <!-- Boutons Accepter / Refuser pour les invitations d'espace (Règle 6) -->
+                <div *ngIf="notif.type === 'invitation_espace' && notif.annonceId" class="actions-invitation-notif">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="repondreInvitationNotif(notif, 'accepte')"
+                    [disabled]="actionNotifEnCours"
+                  >
+                    Accepter
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="repondreInvitationNotif(notif, 'refuse')"
+                    [disabled]="actionNotifEnCours"
+                  >
+                    Refuser
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pied du menu avec accès à la page /notifications -->
+            <div class="menu-deroulant-pied">
+              <a routerLink="/notifications" class="lien-toutes-notifs" (click)="fermerMenus()">
+                <span>Voir toutes les notifications</span>
+                <span class="fleche-lien">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menu utilisateur connecté -->
+        <div class="menu-utilisateur-conteneur">
+          <button
+            type="button"
+            class="btn-profil-toggle"
+            (click)="basculerMenuUtilisateur($event)"
+            [attr.aria-expanded]="menuUtilisateurOuvert"
+          >
+            <app-avatar
+              [nom]="nomUtilisateur"
+              [role]="roleActif === 'admin' ? 'admin' : (roleActif === 'proprietaire' ? 'proprietaire' : 'etudiant')"
+              [taille]="30"
+            ></app-avatar>
+            <span class="nom-profil">{{ nomUtilisateur }}</span>
+            <app-icon name="chevron-down" [size]="14"></app-icon>
+          </button>
+
+          <div *ngIf="menuUtilisateurOuvert" class="menu-deroulant card">
+            <div class="menu-deroulant-entete-profil">
+              <span class="tag-label">
+                {{ roleActif === 'etudiant' ? 'ÉTUDIANT' : (roleActif === 'proprietaire' ? 'PROPRIÉTAIRE' : 'ADMINISTRATION') }}
+              </span>
+              <strong>{{ nomUtilisateur }}</strong>
+            </div>
+            <a routerLink="/profil" class="menu-item" (click)="fermerMenus()">
+              <app-icon name="user" [size]="16"></app-icon>
+              <span>Mon profil</span>
+            </a>
+            <a routerLink="/notifications" class="menu-item" (click)="fermerMenus()">
+              <app-icon name="bell" [size]="16"></app-icon>
+              <span>Notifications</span>
+              <span *ngIf="nbNonLues > 0" class="badge-bulle-menu">{{ nbNonLues }}</span>
+            </a>
+            <button type="button" class="menu-item menu-item-danger" (click)="seDeconnecter()">
+              <app-icon name="log-out" [size]="16"></app-icon>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </nav>
+
+    <!-- Bouton burger mobile -->
+    <button
+      type="button"
+      class="bouton-burger"
+      (click)="basculerMenuMobile()"
+      [attr.aria-expanded]="menuMobileOuvert"
+      aria-label="Ouvrir le menu de navigation"
+    >
+      <app-icon [name]="menuMobileOuvert ? 'close' : 'menu'" [size]="22"></app-icon>
+    </button>
+  </div>
+
+  <!-- Tiroir de navigation mobile responsive -->
+  <div *ngIf="menuMobileOuvert" class="menu-mobile">
+    <div class="container liens-mobile">
+      <!-- 1. Visiteur mobile -->
+      <ng-container *ngIf="roleActif === 'visiteur'">
+        <a routerLink="/" (click)="fermerMenus()">Accueil</a>
+        <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
+        <a routerLink="/" fragment="comment-ca-marche" (click)="fermerMenus()">Comment ça marche</a>
+        <div class="actions-mobile">
+          <a routerLink="/connexion" class="btn btn-secondary w-full" (click)="fermerMenus()">Connexion</a>
+          <a routerLink="/inscription" class="btn btn-primary w-full" (click)="fermerMenus()">Créer un compte</a>
+        </div>
+      </ng-container>
+
+      <!-- 2. Étudiant mobile -->
+      <ng-container *ngIf="roleActif === 'etudiant'">
+        <div class="badge-role-mobile">
+          <app-avatar [nom]="nomUtilisateur" role="etudiant" [taille]="28"></app-avatar>
+          <span>{{ nomUtilisateur }} (Étudiant)</span>
+        </div>
+        <a routerLink="/" (click)="fermerMenus()">Accueil</a>
+        <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
+        <a routerLink="/etudiant" (click)="fermerMenus()">Mon espace</a>
+        <a routerLink="/favoris" (click)="fermerMenus()">Mes favoris</a>
+        <a routerLink="/demandes" (click)="fermerMenus()">Mes demandes</a>
+        <a routerLink="/notifications" class="lien-mobile-notifs" (click)="fermerMenus()">
+          <span>Notifications</span>
+          <span *ngIf="nbNonLues > 0" class="badge-bulle-mobile">{{ nbNonLues }}</span>
+        </a>
+        <a routerLink="/profil" (click)="fermerMenus()">Mon profil</a>
+        <button type="button" class="btn btn-danger btn-sm" (click)="seDeconnecter()">
+          <app-icon name="log-out" [size]="16"></app-icon>
+          <span>Déconnexion</span>
+        </button>
+      </ng-container>
+
+      <!-- 3. Propriétaire mobile -->
+      <ng-container *ngIf="roleActif === 'proprietaire'">
+        <div class="badge-role-mobile">
+          <app-avatar [nom]="nomUtilisateur" role="proprietaire" [taille]="28"></app-avatar>
+          <span>{{ nomUtilisateur }} (Propriétaire)</span>
+        </div>
+        <a routerLink="/" (click)="fermerMenus()">Accueil</a>
+        <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
+        <a routerLink="/proprietaire" (click)="fermerMenus()">Mon espace</a>
+        <a routerLink="/mes-annonces" (click)="fermerMenus()">Mes annonces</a>
+        <a routerLink="/demandes" (click)="fermerMenus()">Demandes reçues</a>
+        <a routerLink="/notifications" class="lien-mobile-notifs" (click)="fermerMenus()">
+          <span>Notifications</span>
+          <span *ngIf="nbNonLues > 0" class="badge-bulle-mobile">{{ nbNonLues }}</span>
+        </a>
+        <a routerLink="/profil" (click)="fermerMenus()">Mon profil</a>
+        <button type="button" class="btn btn-danger btn-sm" (click)="seDeconnecter()">
+          <app-icon name="log-out" [size]="16"></app-icon>
+          <span>Déconnexion</span>
+        </button>
+      </ng-container>
+
+      <!-- 4. Admin mobile -->
+      <ng-container *ngIf="roleActif === 'admin'">
+        <div class="badge-role-mobile">
+          <app-avatar [nom]="nomUtilisateur" role="admin" [taille]="28"></app-avatar>
+          <span>{{ nomUtilisateur }} (Admin)</span>
+        </div>
+        <a routerLink="/" (click)="fermerMenus()">Accueil</a>
+        <a routerLink="/annonces" (click)="fermerMenus()">Annonces</a>
+        <a routerLink="/admin/tableau-de-bord" class="btn btn-primary" (click)="fermerMenus()">Tableau de bord</a>
+        <a routerLink="/notifications" class="lien-mobile-notifs" (click)="fermerMenus()">
+          <span>Notifications</span>
+          <span *ngIf="nbNonLues > 0" class="badge-bulle-mobile">{{ nbNonLues }}</span>
+        </a>
+        <a routerLink="/profil" (click)="fermerMenus()">Mon profil</a>
+        <button type="button" class="btn btn-danger btn-sm" (click)="seDeconnecter()">
+          <app-icon name="log-out" [size]="16"></app-icon>
+          <span>Déconnexion</span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</header>

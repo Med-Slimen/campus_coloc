@@ -1,0 +1,105 @@
+.site-footer {
+  background-color: var(--card);
+  border-top: var(--border-main);
+  margin-top: auto;
+}
+
+.footer-corps {
+  padding: 40px 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.footer-colonne-principale {
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logo-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-symbole {
+  width: 28px;
+  height: 28px;
+  background-color: var(--blue);
+  color: #FFFFFF;
+  border: var(--border-main);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.logo-texte {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.description-footer {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.footer-deux-colonnes {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.groupe-liens {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.groupe-liens a {
+  font-size: 0.9rem;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.groupe-liens a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+/* Frise décorative Sidi Bou Saïd (autorisée une fois dans le footer) */
+.frise-sidibousaid-footer {
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--blue) 0px,
+    var(--blue) 8px,
+    #FFFFFF 8px,
+    #FFFFFF 16px
+  );
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.footer-bas {
+  padding: 16px 16px 20px;
+}
+
+.copyright {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin: 0;
+  text-align: center;
+}

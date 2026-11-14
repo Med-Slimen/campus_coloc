@@ -1,0 +1,415 @@
+.tableau-bord-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.en-tete-tableau {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 14px;
+}
+
+.titre-vue {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.contenu-tableau {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ==========================================================================
+   1. 4 CARTES KPI
+   ========================================================================== */
+.grille-kpi {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.carte-kpi {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.kpi-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-icone {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ink);
+  background-color: var(--paper);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icone-ok {
+  background-color: #EBF7EE;
+  color: var(--ok);
+}
+
+.icone-bleue {
+  background-color: #EFF4FC;
+  color: var(--blue);
+}
+
+.icone-sun {
+  background-color: #FFFBEA;
+  color: var(--warn);
+}
+
+.kpi-alerte {
+  border-color: var(--warn);
+}
+
+.kpi-valeur {
+  font-family: var(--font-heading);
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.kpi-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.kpi-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background-color: var(--paper);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #E0D7C6;
+}
+
+.kpi-texte-mention {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   2. BLOC 'À TRAITER'
+   ========================================================================== */
+.bloc-a-traiter {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.entete-bloc-a-traiter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 12px;
+}
+
+.titre-bloc {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.grille-sections-a-traiter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.sous-bloc-traiter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sous-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.sous-entete h4 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  background-color: var(--card);
+}
+
+.table-admin {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table-admin th {
+  background-color: var(--paper);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.table-admin td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ECE3D4;
+  vertical-align: middle;
+}
+
+.table-admin tr:last-child td {
+  border-bottom: none;
+}
+
+.cellule-utilisateur {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.cellule-utilisateur strong {
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.cellule-utilisateur small {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.date-depot {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.col-action {
+  text-align: right;
+  width: 80px;
+}
+
+.etat-vide-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  background-color: var(--paper);
+  border: 1.5px dashed var(--ink);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   3 & 4. GRILLE DEUX COLONNES (ANNONCES & INSCRIPTIONS)
+   ========================================================================== */
+.grille-deux-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.entete-bloc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ECE3D4;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.lien-voir-tout {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+/* Barres horizontales CSS */
+.liste-barres-statut {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.ligne-barre {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infos-barre {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.nom-statut {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chiffre-statut {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.conteneur-barre {
+  height: 12px;
+  background-color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barre-remplissage {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  min-width: 4px;
+}
+
+.barre-ok {
+  background-color: var(--ok);
+}
+
+.barre-sun {
+  background-color: var(--sun);
+}
+
+.barre-warn {
+  background-color: var(--warn);
+}
+
+.barre-danger {
+  background-color: var(--danger);
+}
+
+/* Liste des 8 derniers utilisateurs */
+.liste-utilisateurs-recents {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ligne-utilisateur {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ECE3D4;
+}
+
+.ligne-utilisateur:last-child {
+  border-bottom: none;
+}
+
+.info-user-recents {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nom-et-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nom-user {
+  font-size: 0.9rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-role {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.email-user {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statut-et-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.date-user {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .grille-kpi {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grille-sections-a-traiter {
+    grid-template-columns: 1fr;
+  }
+
+  .grille-deux-colonnes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .grille-kpi {
+    grid-template-columns: 1fr;
+  }
+
+  .en-tete-tableau {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

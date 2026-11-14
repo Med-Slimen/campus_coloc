@@ -1,0 +1,527 @@
+.accueil-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ==========================================================================
+   1. SECTION HERO & EN-TÊTE
+   ========================================================================== */
+.section-hero {
+  padding: 56px 16px 48px;
+  background-color: var(--paper);
+}
+
+.contenu-hero {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.hero-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero-titre {
+  font-family: var(--font-heading);
+  font-size: 2.85rem;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.hero-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 540px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* Carte de recherche rapide */
+.carte-recherche {
+  background-color: var(--card);
+  padding: 28px;
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.entete-recherche {
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 12px;
+}
+
+.titre-recherche {
+  font-family: var(--font-heading);
+  font-size: 1.55rem;
+  margin: 4px 0 0 0;
+  color: var(--ink);
+}
+
+.formulaire-recherche {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-rechercher {
+  padding: 12px;
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* Frise décorative Sidi Bou Saïd autorisée sous le header */
+.frise-sidibousaid-home {
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--blue) 0px,
+    var(--blue) 8px,
+    #FFFFFF 8px,
+    #FFFFFF 16px
+  );
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+}
+
+/* ==========================================================================
+   2. LIGNE DE 3 FAITS SUR UN BANDEAU RÉGLÉ
+   ========================================================================== */
+.section-faits {
+  background-color: var(--card);
+  border-bottom: 1.5px solid var(--ink);
+  padding: 28px 16px;
+}
+
+.grille-faits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.fait-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.fait-icone {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: var(--radius);
+  border: var(--border-main);
+  background-color: var(--paper);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fait-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fait-titre {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.fait-desc {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   3. 'COMMENT ÇA MARCHE' EN 2 COLONNES (GRANDS CHIFFRES SERIF)
+   ========================================================================== */
+.section-etapes {
+  padding: 64px 16px;
+}
+
+.en-tete-section {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.titre-section {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.desc-section {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.grille-etapes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.carte-etape {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  box-shadow: 3px 3px 0 var(--ink);
+  background-color: var(--card);
+}
+
+.chiffre-serif {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--blue);
+  line-height: 1;
+  min-width: 48px;
+}
+
+.etape-contenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.etape-titre {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.etape-desc {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   4. 'POUR QUI ?' (DEUX GRANDS PANNEAUX CÔTE À CÔTE)
+   ========================================================================== */
+.section-publics {
+  padding: 64px 16px;
+  background-color: #EDE7DC;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.grille-publics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.panneau-public {
+  padding: 32px;
+  border-radius: var(--radius);
+  border: var(--border-main);
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Panneau Étudiants (Bleu) */
+.panneau-etudiant {
+  background-color: var(--blue);
+  color: #FFFFFF;
+}
+
+.panneau-etudiant .panneau-titre {
+  color: #FFFFFF;
+}
+
+.panneau-etudiant .panneau-desc {
+  color: #E2ECFC;
+}
+
+.panneau-etudiant .liste-avantages li {
+  color: #FFFFFF;
+}
+
+.panneau-etudiant .liste-avantages app-icon {
+  color: var(--sun);
+}
+
+/* Panneau Propriétaires (Papier avec bordure ink) */
+.panneau-proprietaire {
+  background-color: var(--card);
+  color: var(--ink);
+}
+
+.panneau-proprietaire .panneau-titre {
+  color: var(--ink);
+}
+
+.panneau-proprietaire .panneau-desc {
+  color: var(--ink-soft);
+}
+
+.panneau-proprietaire .liste-avantages li {
+  color: var(--ink);
+}
+
+.panneau-proprietaire .liste-avantages app-icon {
+  color: var(--ok);
+}
+
+.panneau-entete {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panneau-titre {
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  margin: 0;
+}
+
+.panneau-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tag-clair {
+  background-color: #FFFFFF;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.liste-avantages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liste-avantages li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.panneau-action {
+  margin-top: auto;
+}
+
+/* ==========================================================================
+   5. 'LES DERNIÈRES ANNONCES' (3 CARTES)
+   ========================================================================== */
+.section-annonces {
+  padding: 64px 16px;
+}
+
+.en-tete-annonces {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 16px;
+  margin-bottom: 28px;
+}
+
+.lien-toutes-annonces {
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: underline;
+  font-size: 0.95rem;
+}
+
+.grille-cartes-annonces {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.carte-logement {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  text-decoration: none;
+  color: var(--ink);
+  background-color: var(--card);
+}
+
+.entete-carte-logement {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titre-logement {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  line-height: 1.3;
+  margin: 0;
+  color: var(--ink);
+}
+
+.lieu-logement {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.caracteristiques-logement {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pied-carte-logement {
+  margin-top: auto;
+  border-top: 1px solid #ECE3D4;
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.prix-loyer {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.prix-loyer small {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   6. BANNIÈRE DE CLÔTURE EN BLEU
+   ========================================================================== */
+.section-banniere-cloture {
+  padding: 0 16px 64px 16px;
+}
+
+.banniere-bleue {
+  background-color: var(--blue);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 40px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.banniere-phrase {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  color: #FFFFFF;
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.3;
+}
+
+.btn-banniere {
+  white-space: nowrap;
+  font-size: 1rem;
+  padding: 12px 20px;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (jusqu'à 360px)
+   ========================================================================== */
+@media (max-width: 960px) {
+  .contenu-hero {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .hero-titre {
+    font-size: 2.2rem;
+  }
+
+  .grille-faits {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .grille-publics {
+    grid-template-columns: 1fr;
+  }
+
+  .grille-cartes-annonces {
+    grid-template-columns: 1fr;
+  }
+
+  .banniere-bleue {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .grille-etapes {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-titre {
+    font-size: 1.85rem;
+  }
+
+  .section-hero {
+    padding: 36px 16px;
+  }
+
+  .carte-recherche {
+    padding: 20px;
+  }
+
+  .panneau-public {
+    padding: 24px 16px;
+  }
+
+  .banniere-phrase {
+    font-size: 1.35rem;
+  }
+}

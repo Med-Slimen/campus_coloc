@@ -1,0 +1,135 @@
+<div class="admin-conteneur">
+  <!-- Barre latérale fixe 240px (ou tiroir sur mobile) -->
+  <aside class="admin-sidebar" [class.ouverte]="sidebarOuverte">
+    <!-- En-tête de la barre latérale avec logo et petit tag ADMIN -->
+    <div class="sidebar-entete">
+      <a routerLink="/admin/tableau-de-bord" class="logo-admin" (click)="fermerSidebar()">
+        <span class="logo-carre">C</span>
+        <div class="logo-texte-bloc">
+          <span class="logo-titre">CampusColoc</span>
+          <span class="tag-admin">ADMIN</span>
+        </div>
+      </a>
+      <button type="button" class="btn-fermer-sidebar" (click)="fermerSidebar()" aria-label="Fermer le menu">
+        <app-icon name="close" [size]="18"></app-icon>
+      </button>
+    </div>
+
+    <!-- Navigation principale avec icônes et badges compteurs -->
+    <nav class="sidebar-navigation">
+      <span class="tag-label section-titre">MODÉRATION & GESTION</span>
+
+      <!-- 1. Tableau de bord -->
+      <a
+        routerLink="/admin/tableau-de-bord"
+        routerLinkActive="lien-actif"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="fermerSidebar()"
+      >
+        <app-icon name="dashboard" [size]="18"></app-icon>
+        <span class="libelle-menu">Tableau de bord</span>
+      </a>
+
+      <!-- 2. Vérifications -->
+      <a
+        routerLink="/admin/verifications"
+        routerLinkActive="lien-actif"
+        (click)="fermerSidebar()"
+      >
+        <app-icon name="shield-check" [size]="18"></app-icon>
+        <span class="libelle-menu">Vérifications</span>
+        <span *ngIf="nbVerificationsEnAttente > 0" class="badge-compteur badge-sun">
+          {{ nbVerificationsEnAttente }}
+        </span>
+      </a>
+
+      <!-- 3. Annonces -->
+      <a
+        routerLink="/admin/annonces"
+        routerLinkActive="lien-actif"
+        (click)="fermerSidebar()"
+      >
+        <app-icon name="home" [size]="18"></app-icon>
+        <span class="libelle-menu">Annonces</span>
+        <span *ngIf="nbAnnoncesEnAttente > 0" class="badge-compteur badge-sun">
+          {{ nbAnnoncesEnAttente }}
+        </span>
+      </a>
+
+      <!-- 4. Utilisateurs -->
+      <a
+        routerLink="/admin/utilisateurs"
+        routerLinkActive="lien-actif"
+        (click)="fermerSidebar()"
+      >
+        <app-icon name="users" [size]="18"></app-icon>
+        <span class="libelle-menu">Utilisateurs</span>
+        <span *ngIf="nbUtilisateurs > 0" class="badge-compteur badge-neutral">
+          {{ nbUtilisateurs }}
+        </span>
+      </a>
+
+      <!-- 5. Signalements -->
+      <a
+        routerLink="/admin/signalements"
+        routerLinkActive="lien-actif"
+        (click)="fermerSidebar()"
+      >
+        <app-icon name="flag" [size]="18"></app-icon>
+        <span class="libelle-menu">Signalements</span>
+        <span *ngIf="nbSignalementsOuverts > 0" class="badge-compteur badge-danger">
+          {{ nbSignalementsOuverts }}
+        </span>
+      </a>
+    </nav>
+
+    <!-- Pied de la barre latérale avec 'Voir le site' et 'Déconnexion' -->
+    <div class="sidebar-bas">
+      <a routerLink="/" class="lien-bas" (click)="fermerSidebar()">
+        <app-icon name="eye" [size]="16"></app-icon>
+        <span>Voir le site</span>
+      </a>
+
+      <button type="button" class="btn-deconnexion" (click)="seDeconnecter()">
+        <app-icon name="log-out" [size]="16"></app-icon>
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Voile d'arrière-plan pour tiroir mobile -->
+  <div *ngIf="sidebarOuverte" class="overlay-mobile" (click)="fermerSidebar()"></div>
+
+  <!-- Zone de contenu principale (décalée de 240px sur écran large) -->
+  <div class="admin-zone-droite">
+    <!-- Barre supérieure (Top bar) avec titre de page et profil admin -->
+    <header class="admin-topbar">
+      <div class="topbar-gauche">
+        <button
+          type="button"
+          class="btn-menu-admin"
+          (click)="basculerSidebar()"
+          aria-label="Ouvrir le volet de navigation"
+        >
+          <app-icon name="menu" [size]="20"></app-icon>
+        </button>
+        <h1 class="topbar-titre">{{ titrePage }}</h1>
+      </div>
+
+      <div class="topbar-droite">
+        <div class="admin-profil-pill">
+          <app-avatar [nom]="adminNom" role="admin" [taille]="32"></app-avatar>
+          <div class="admin-infos">
+            <span class="admin-nom">{{ adminNom }}</span>
+            <span class="admin-statut">Administrateur</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenu de la vue admin injectée -->
+    <main class="admin-contenu">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

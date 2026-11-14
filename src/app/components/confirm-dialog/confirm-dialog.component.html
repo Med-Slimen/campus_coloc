@@ -1,0 +1,30 @@
+<div *ngIf="ouvert" class="overlay-dialogue" (click)="surAnnuler()">
+  <div class="boite-dialogue card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="dialogue-entete">
+      <div class="icone-avertissement" [class.icone-danger]="dangereux">
+        <app-icon [name]="dangereux ? 'trash' : 'alert'" [size]="22"></app-icon>
+      </div>
+      <div>
+        <span class="tag-label">CONFIRMATION</span>
+        <h3 class="dialogue-titre">{{ titre }}</h3>
+      </div>
+    </div>
+
+    <p class="dialogue-message">{{ message }}</p>
+
+    <div class="dialogue-actions">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="surAnnuler()">
+        {{ texteAnnuler }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm"
+        [ngClass]="dangereux ? 'btn-danger' : 'btn-primary'"
+        (click)="surConfirmer()"
+      >
+        {{ texteConfirmer }}
+      </button>
+    </div>
+  </div>
+</div>
+

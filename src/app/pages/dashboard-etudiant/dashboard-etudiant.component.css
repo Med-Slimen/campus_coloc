@@ -1,0 +1,368 @@
+.page-dashboard {
+  padding-top: 32px;
+  padding-bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* En-tête */
+.en-tete-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--border-soft);
+  padding-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.titres-bloc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titre-principal {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.desc-page {
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  max-width: 650px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.actions-en-tete {
+  flex-shrink: 0;
+}
+
+.zone-etat {
+  padding: 40px 0;
+}
+
+/* 1. Carte de vérification d'identité */
+.carte-verification-statut {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background-color: var(--card);
+  border: var(--border-main);
+  box-shadow: 3px 3px 0 var(--border-soft);
+}
+
+.carte-verification-statut.statut-verifie {
+  border-left: 5px solid var(--success);
+  background-color: #F6FAF7;
+}
+
+.carte-verification-statut.statut-en_attente {
+  border-left: 5px solid var(--orange);
+  background-color: #FDF9F3;
+}
+
+.carte-verification-statut.statut-non_verifie {
+  border-left: 5px solid var(--blue);
+  background-color: #F4F8FB;
+}
+
+.carte-verification-statut.statut-refuse {
+  border-left: 5px solid var(--danger);
+  background-color: #FDF4F4;
+}
+
+.icone-verif-grand {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  border: var(--border-main);
+  background-color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+
+.statut-verifie .icone-verif-grand {
+  background-color: #E8F4EC;
+  color: var(--success);
+  border-color: rgba(39, 110, 68, 0.4);
+}
+
+.statut-en_attente .icone-verif-grand {
+  background-color: #FAF0E4;
+  color: var(--orange);
+  border-color: rgba(217, 119, 54, 0.4);
+}
+
+.statut-non_verifie .icone-verif-grand {
+  background-color: #EAF0F6;
+  color: var(--blue);
+  border-color: rgba(43, 76, 111, 0.4);
+}
+
+.statut-refuse .icone-verif-grand {
+  background-color: #FAECEC;
+  color: var(--danger);
+  border-color: rgba(197, 48, 48, 0.4);
+}
+
+.contenu-verif-statut {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entete-verif-statut {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.titre-verif {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.texte-verif {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.action-verif {
+  flex-shrink: 0;
+}
+
+/* 2. Grille de statistiques */
+.grille-statistiques {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.stat-carte {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--border-soft);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.stat-carte:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.stat-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--blue);
+}
+
+.stat-chiffre {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-desc {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.lien-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-top: auto;
+  text-decoration: none;
+  transition: gap 0.12s ease;
+}
+
+.lien-detail:hover {
+  gap: 10px;
+  text-decoration: underline;
+}
+
+.fleche-lien {
+  transition: transform 0.12s ease;
+}
+
+.lien-detail:hover .fleche-lien {
+  transform: translateX(2px);
+}
+
+/* 3. Bloc recherche rapide */
+.bloc-recherche-rapide {
+  padding: 24px;
+  background-color: #FFFFFF;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--border-soft);
+}
+
+.entete-recherche-rapide {
+  margin-bottom: 16px;
+}
+
+.titre-bloc {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+
+.form-recherche-rapide {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.champ-groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.champ-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.champ-input {
+  height: 42px;
+  padding: 8px 12px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  background-color: var(--card);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.champ-input:focus {
+  border-color: var(--blue);
+}
+
+.btn-recherche {
+  height: 42px;
+  padding: 0 24px;
+}
+
+/* 4 & 5. Sections annonces */
+.section-annonces-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entete-section-dashboard {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.titre-section {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+
+.lien-voir-tout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.lien-voir-tout:hover {
+  text-decoration: underline;
+}
+
+.grille-annonces-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.etat-vide-dashboard {
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  background-color: var(--paper);
+  border: 1.5px dashed var(--border-soft);
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .grille-statistiques {
+    grid-template-columns: 1fr;
+  }
+
+  .form-recherche-rapide {
+    grid-template-columns: 1fr;
+  }
+
+  .grille-annonces-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .carte-verification-statut {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-verif {
+    width: 100%;
+  }
+
+  .action-verif .btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,14 @@
+<div
+  class="avatar-cercle"
+  [class.avatar-etudiant]="role === 'etudiant'"
+  [class.avatar-proprietaire]="role === 'proprietaire'"
+  [class.avatar-admin]="role === 'admin'"
+  [style.width.px]="taille"
+  [style.height.px]="taille"
+  [style.font-size.px]="taillePolice"
+  [title]="nom"
+>
+  <img *ngIf="photoUrl" [src]="photoUrl" [alt]="nom" class="avatar-image" />
+  <span *ngIf="!photoUrl" class="avatar-initiales">{{ initiales }}</span>
+</div>
+

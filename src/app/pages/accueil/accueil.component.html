@@ -1,0 +1,317 @@
+<div class="accueil-page">
+  <!-- 1. En-tête principal (Header) : Présentation à gauche, Formulaire de recherche à droite -->
+  <section class="section-hero">
+    <div class="container contenu-hero">
+      <!-- Colonne gauche : Présentation -->
+      <div class="hero-texte">
+        <span class="tag-label">COLOCATION ÉTUDIANTE EN TUNISIE</span>
+        <h1 class="hero-titre">Trouvez votre coloc, sans mauvaise surprise.</h1>
+        <p class="hero-description">
+          La première plateforme dédiée aux étudiants tunisiens pour partager un logement vérifié près de l'ENIT, de l'ISG, de la Faculté des Sciences de Tunis ou de votre campus universitaire.
+        </p>
+
+        <div class="hero-actions">
+          <a routerLink="/annonces" class="btn btn-primary">
+            <app-icon name="search" [size]="18"></app-icon>
+            <span>Voir les annonces</span>
+          </a>
+          <a routerLink="/inscription" class="btn btn-secondary">
+            <app-icon name="user" [size]="18"></app-icon>
+            <span>Créer un compte</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Colonne droite : Carte de recherche rapide -->
+      <div class="card carte-recherche">
+        <div class="entete-recherche">
+          <span class="tag-label">RECHERCHE RAPIDE</span>
+          <h2 class="titre-recherche">Trouver un logement</h2>
+        </div>
+
+        <form (ngSubmit)="lancerRecherche()" class="formulaire-recherche">
+          <!-- Sélection du gouvernorat -->
+          <div class="form-group">
+            <label for="villeSelect">GOUVERNORAT</label>
+            <select id="villeSelect" name="ville" [(ngModel)]="villeRecherche">
+              <option value="">Tous les gouvernorats</option>
+              <option *ngFor="let v of villes" [value]="v">{{ v }}</option>
+            </select>
+          </div>
+
+          <!-- Saisie du budget maximal -->
+          <div class="form-group">
+            <label for="budgetInput">BUDGET MAX PAR PERSONNE (DT)</label>
+            <input
+              type="number"
+              id="budgetInput"
+              name="budgetMax"
+              [(ngModel)]="budgetMaxRecherche"
+              placeholder="Ex. 350 DT"
+              min="0"
+              step="10"
+            />
+          </div>
+
+          <!-- Bouton de validation -->
+          <button type="submit" class="btn btn-primary w-full btn-rechercher">
+            <app-icon name="search" [size]="18"></app-icon>
+            <span>Rechercher</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bandeau décoratif Sidi Bou Saïd situé sous la section d'en-tête -->
+  <div class="frise-sidibousaid-home"></div>
+
+  <!-- 2. Ligne de 3 faits sur un bandeau réglé -->
+  <section class="section-faits">
+    <div class="container grille-faits">
+      <div class="fait-item">
+        <div class="fait-icone">
+          <app-icon name="shield-check" [size]="22"></app-icon>
+        </div>
+        <div class="fait-texte">
+          <h3 class="fait-titre">Identités vérifiées</h3>
+          <p class="fait-desc">Carte étudiante ou CIN contrôlée manuellement pour chaque membre.</p>
+        </div>
+      </div>
+
+      <div class="fait-item">
+        <div class="fait-icone">
+          <app-icon name="home" [size]="22"></app-icon>
+        </div>
+        <div class="fait-texte">
+          <h3 class="fait-titre">Annonces contrôlées</h3>
+          <p class="fait-desc">Logements inspectés avec prix réels et conditions décentes sans frais cachés.</p>
+        </div>
+      </div>
+
+      <div class="fait-item">
+        <div class="fait-icone">
+          <app-icon name="coins" [size]="22"></app-icon>
+        </div>
+        <div class="fait-texte">
+          <h3 class="fait-titre">Budget par personne calculé</h3>
+          <p class="fait-desc">Loyer et charges divisés équitablement en dinars tunisiens (DT).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 'Comment ça marche' avec liste numérotée sur 2 colonnes (grands chiffres serif) -->
+  <section id="comment-ca-marche" class="section-etapes">
+    <div class="container">
+      <div class="en-tete-section">
+        <span class="tag-label">DÉMARCHE SIMPLE</span>
+        <h2 class="titre-section">Comment ça marche ?</h2>
+        <p class="desc-section">Votre parcours étape par étape pour emménager en toute sérénité.</p>
+      </div>
+
+      <div class="grille-etapes">
+        <!-- Étape 1 -->
+        <div class="carte-etape card">
+          <div class="chiffre-serif">1</div>
+          <div class="etape-contenu">
+            <h3 class="etape-titre">Créer un compte</h3>
+            <p class="etape-desc">
+              Inscrivez-vous en quelques clics en tant qu'étudiant ou bailleur avec votre adresse courriel.
+            </p>
+          </div>
+        </div>
+
+        <!-- Étape 2 -->
+        <div class="carte-etape card">
+          <div class="chiffre-serif">2</div>
+          <div class="etape-contenu">
+            <h3 class="etape-titre">Faire vérifier son profil</h3>
+            <p class="etape-desc">
+              Déposez votre carte d'étudiant (INSAT, ENIT, FST, TBS...) ou CIN pour obtenir le badge de confiance.
+            </p>
+          </div>
+        </div>
+
+        <!-- Étape 3 -->
+        <div class="carte-etape card">
+          <div class="chiffre-serif">3</div>
+          <div class="etape-contenu">
+            <h3 class="etape-titre">Envoyer une demande</h3>
+            <p class="etape-desc">
+              Parcourez les offres par gouvernorat et adressez votre candidature directement au bailleur en un clic.
+            </p>
+          </div>
+        </div>
+
+        <!-- Étape 4 -->
+        <div class="carte-etape card">
+          <div class="chiffre-serif">4</div>
+          <div class="etape-contenu">
+            <h3 class="etape-titre">Rejoindre l'espace et partager le loyer</h3>
+            <p class="etape-desc">
+              Accédez au salon privé de votre colocation, organisez les règles de maison et partagez les charges en DT.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 'Pour qui ?' : Deux grands panneaux côte à côte (Étudiants en bleu, Propriétaires en papier) -->
+  <section class="section-publics">
+    <div class="container">
+      <div class="en-tete-section">
+        <span class="tag-label">POUR TOUTE LA COMMUNAUTÉ</span>
+        <h2 class="titre-section">Pour qui ?</h2>
+      </div>
+
+      <div class="grille-publics">
+        <!-- Panneau Étudiants (Bleu) -->
+        <div class="panneau-public panneau-etudiant">
+          <div class="panneau-entete">
+            <span class="tag-label tag-clair">VOUS CHERCHEZ UNE CHAMBRE</span>
+            <h3 class="panneau-titre">Étudiants</h3>
+            <p class="panneau-desc">
+              Trouvez des colocataires sérieux près de votre établissement et allégez vos dépenses mensuelles.
+            </p>
+          </div>
+
+          <ul class="liste-avantages">
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Logements proches des facultés (Centre Urbain Nord, El Manar, La Manouba, Monastir, Sfax).</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Loyer divisé par place avec calcul transparent en dinars tunisiens (DT).</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Profils de colocataires vérifiés sur justificatif universitaire officiel.</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Espace numérique dédié pour échanger et convenir des règles de vie commune.</span>
+            </li>
+          </ul>
+
+          <div class="panneau-action">
+            <a routerLink="/annonces" class="btn btn-secondary w-full">
+              <span>Voir les colocations étudiantes</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Panneau Propriétaires (Papier avec bordure ink) -->
+        <div class="panneau-public panneau-proprietaire card">
+          <div class="panneau-entete">
+            <span class="tag-label">VOUS LOUEZ UN LOGEMENT</span>
+            <h3 class="panneau-titre">Propriétaires</h3>
+            <p class="panneau-desc">
+              Louez rapidement vos chambres ou appartements à des étudiants rigoureux, sans mauvaise surprise.
+            </p>
+          </div>
+
+          <ul class="liste-avantages">
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Dossiers de candidatures complets avec cartes d'étudiant préalablement vérifiées.</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Occupation optimisée de vos chambres disponibles sans vacance locative prolongée.</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Contact direct et respectueux sans intermédiaire ni commission d'agence abusive.</span>
+            </li>
+            <li>
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>Visibilité auprès de la communauté universitaire de toute la Tunisie.</span>
+            </li>
+          </ul>
+
+          <div class="panneau-action">
+            <a routerLink="/inscription" class="btn btn-primary w-full">
+              <span>Publier une annonce de logement</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 'Les dernières annonces' (3 cartes chargées, masquée s'il n'y en a aucune) -->
+  <section class="section-annonces" *ngIf="chargementAnnonces || erreurAnnonces || annonces.length > 0">
+    <div class="container">
+      <div class="en-tete-annonces">
+        <div>
+          <span class="tag-label">OPPORTUNITÉS DU MOMENT</span>
+          <h2 class="titre-section">Les dernières annonces</h2>
+        </div>
+        <a routerLink="/annonces" class="lien-toutes-annonces" *ngIf="annonces.length > 0">
+          <span>Toutes les annonces →</span>
+        </a>
+      </div>
+
+      <!-- État de chargement avec squelettes -->
+      <app-loader *ngIf="chargementAnnonces" type="cards" [count]="3"></app-loader>
+
+      <!-- État d'erreur -->
+      <app-error-message
+        *ngIf="erreurAnnonces && !chargementAnnonces"
+        [message]="erreurAnnonces"
+        (reessayer)="chargerDernieresAnnonces()"
+      ></app-error-message>
+
+      <!-- Grille des 3 annonces -->
+      <div class="grille-cartes-annonces" *ngIf="!chargementAnnonces && !erreurAnnonces && annonces.length > 0">
+        <a
+          *ngFor="let a of annonces"
+          [routerLink]="['/annonces', a.id]"
+          class="card card-interactive carte-logement"
+        >
+          <div class="entete-carte-logement">
+            <span class="tag-label">{{ a.ville | uppercase }}</span>
+            <app-status-badge [statut]="a.statut"></app-status-badge>
+          </div>
+
+          <h3 class="titre-logement">{{ a.titre }}</h3>
+
+          <p class="lieu-logement">
+            <app-icon name="map-pin" [size]="15"></app-icon>
+            <span>{{ a.quartier }}, {{ a.ville }}</span>
+          </p>
+
+          <div class="caracteristiques-logement">
+            <span class="badge badge-neutral" *ngIf="a.meuble">Meublé</span>
+            <span class="badge badge-neutral">{{ a.nombrePlaces }} place{{ a.nombrePlaces > 1 ? 's' : '' }}</span>
+          </div>
+
+          <div class="pied-carte-logement">
+            <div>
+              <span class="tag-label">LOYER PAR PERSONNE</span>
+              <div class="prix-loyer tabular-nums">
+                {{ a.loyer }} DT <small>/ mois</small>
+              </div>
+            </div>
+            <span class="btn btn-sm btn-secondary">Voir le détail</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Bandeau de clôture en bleu avec une phrase et un bouton -->
+  <section class="section-banniere-cloture">
+    <div class="container">
+      <div class="banniere-bleue">
+        <h2 class="banniere-phrase">Prêt à trouver la colocation idéale pour votre prochaine rentrée universitaire ?</h2>
+        <a routerLink="/inscription" class="btn btn-secondary btn-banniere">
+          <span>Créer mon compte gratuitement</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>

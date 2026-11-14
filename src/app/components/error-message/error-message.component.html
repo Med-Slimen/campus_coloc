@@ -1,0 +1,18 @@
+<div class="carte-erreur" role="alert">
+  <div class="en-tete-erreur">
+    <div class="icone-erreur">
+      <app-icon name="alert" [size]="20"></app-icon>
+    </div>
+    <div class="texte-conteneur">
+      <span class="tag-label statut-danger">ERREUR D'EXÉCUTION</span>
+      <p class="message-erreur">{{ message }}</p>
+    </div>
+  </div>
+  <div *ngIf="reessayerVisible" class="action-erreur">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="surReessayer()">
+      <app-icon name="rotate" [size]="14"></app-icon>
+      <span>{{ texteBouton }}</span>
+    </button>
+  </div>
+</div>
+

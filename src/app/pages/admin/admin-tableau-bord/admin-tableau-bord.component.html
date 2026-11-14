@@ -1,0 +1,269 @@
+<div class="tableau-bord-page">
+  <!-- En-tête avec titre et bouton actualiser -->
+  <div class="en-tete-tableau">
+    <div>
+      <span class="tag-label">VUE D'ENSEMBLE</span>
+      <h2 class="titre-vue">Indicateurs clés et modération</h2>
+    </div>
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      (click)="chargerDonnees()"
+      [disabled]="chargement"
+    >
+      <app-icon name="rotate" [size]="14"></app-icon>
+      <span>Actualiser</span>
+    </button>
+  </div>
+
+  <!-- État de chargement général -->
+  <app-loader *ngIf="chargement" type="cards" [count]="4"></app-loader>
+
+  <!-- État d'erreur -->
+  <app-error-message
+    *ngIf="erreur && !chargement"
+    [message]="erreur"
+    (reessayer)="chargerDonnees()"
+  ></app-error-message>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!chargement && !erreur" class="contenu-tableau">
+    <!-- ====================================================================
+         1. 4 CARTES KPI
+         ==================================================================== -->
+    <div class="grille-kpi">
+      <!-- KPI 1 : Utilisateurs avec répartition étudiant/propriétaire -->
+      <div class="card carte-kpi">
+        <div class="kpi-entete">
+          <span class="tag-label">UTILISATEURS</span>
+          <div class="kpi-icone">
+            <app-icon name="users" [size]="20"></app-icon>
+          </div>
+        </div>
+        <div class="kpi-valeur tabular-nums">{{ totalUtilisateurs }}</div>
+        <div class="kpi-detail">
+          <span class="kpi-pill">{{ nbEtudiants }} étudiants</span>
+          <span class="kpi-pill">{{ nbProprietaires }} propriétaires</span>
+        </div>
+      </div>
+
+      <!-- KPI 2 : Annonces publiées -->
+      <div class="card carte-kpi">
+        <div class="kpi-entete">
+          <span class="tag-label">ANNONCES PUBLIÉES</span>
+          <div class="kpi-icone icone-ok">
+            <app-icon name="home" [size]="20"></app-icon>
+          </div>
+        </div>
+        <div class="kpi-valeur tabular-nums">{{ nbAnnoncesPubliees }}</div>
+        <div class="kpi-detail">
+          <span class="kpi-texte-mention">Logements visibles en ligne</span>
+        </div>
+      </div>
+
+      <!-- KPI 3 : Demandes totales -->
+      <div class="card carte-kpi">
+        <div class="kpi-entete">
+          <span class="tag-label">DEMANDES TOTALES</span>
+          <div class="kpi-icone icone-bleue">
+            <app-icon name="inbox" [size]="20"></app-icon>
+          </div>
+        </div>
+        <div class="kpi-valeur tabular-nums">{{ totalDemandes }}</div>
+        <div class="kpi-detail">
+          <span class="kpi-texte-mention">Candidatures de colocation</span>
+        </div>
+      </div>
+
+      <!-- KPI 4 : Vérifications en attente -->
+      <div class="card carte-kpi" [class.kpi-alerte]="nbVerificationsEnAttente > 0">
+        <div class="kpi-entete">
+          <span class="tag-label">EN ATTENTE MODÉRATION</span>
+          <div class="kpi-icone icone-sun">
+            <app-icon name="shield-check" [size]="20"></app-icon>
+          </div>
+        </div>
+        <div class="kpi-valeur tabular-nums">{{ nbVerificationsEnAttente }}</div>
+        <div class="kpi-detail">
+          <span class="kpi-texte-mention">Justificatifs à contrôler</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         2. BLOC 'À TRAITER' (5 plus anciennes vérifications et annonces)
+         ==================================================================== -->
+    <div class="card bloc-a-traiter">
+      <div class="entete-bloc-a-traiter">
+        <div class="titre-avec-badge">
+          <span class="tag-label">PRIORITÉS DU JOUR</span>
+          <h3 class="titre-bloc">À traiter en priorité</h3>
+        </div>
+        <span class="badge badge-sun" *ngIf="verificationsATraiter.length + annoncesATraiter.length > 0">
+          {{ verificationsATraiter.length + annoncesATraiter.length }} éléments en attente
+        </span>
+      </div>
+
+      <div class="grille-sections-a-traiter">
+        <!-- Sous-bloc 1 : 5 plus anciennes vérifications d'identité -->
+        <div class="sous-bloc-traiter">
+          <div class="sous-entete">
+            <app-icon name="shield-check" [size]="16"></app-icon>
+            <h4>Vérifications d'identité les plus anciennes</h4>
+          </div>
+
+          <div *ngIf="verificationsATraiter.length === 0" class="etat-vide-compact">
+            <app-icon name="check" [size]="20"></app-icon>
+            <span>Toutes les vérifications ont été traitées.</span>
+          </div>
+
+          <div *ngIf="verificationsATraiter.length > 0" class="table-responsive">
+            <table class="table-admin">
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Document</th>
+                  <th>Date dépôt</th>
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let v of verificationsATraiter">
+                  <td>
+                    <div class="cellule-utilisateur">
+                      <strong>{{ v.userNom }}</strong>
+                      <small>{{ v.userEmail }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge-neutral">
+                      {{ v.type === 'carte_etudiante' ? 'Carte étudiante' : 'CIN' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="date-depot">{{ formaterDate(v.dateDepot) }}</span>
+                  </td>
+                  <td class="col-action">
+                    <a routerLink="/admin/verifications" class="btn btn-primary btn-sm">
+                      <span>Traiter</span>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sous-bloc 2 : 5 plus anciennes annonces en attente -->
+        <div class="sous-bloc-traiter">
+          <div class="sous-entete">
+            <app-icon name="home" [size]="16"></app-icon>
+            <h4>Annonces en attente de validation</h4>
+          </div>
+
+          <div *ngIf="annoncesATraiter.length === 0" class="etat-vide-compact">
+            <app-icon name="check" [size]="20"></app-icon>
+            <span>Aucune annonce en attente de modération.</span>
+          </div>
+
+          <div *ngIf="annoncesATraiter.length > 0" class="table-responsive">
+            <table class="table-admin">
+              <thead>
+                <tr>
+                  <th>Logement</th>
+                  <th>Gouvernorat</th>
+                  <th>Date création</th>
+                  <th class="col-action">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of annoncesATraiter">
+                  <td>
+                    <div class="cellule-utilisateur">
+                      <strong>{{ a.titre }}</strong>
+                      <small>{{ a.loyer }} DT / mois</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge-neutral">{{ a.ville }}</span>
+                  </td>
+                  <td>
+                    <span class="date-depot">{{ formaterDate(a.dateCreation) }}</span>
+                  </td>
+                  <td class="col-action">
+                    <a routerLink="/admin/annonces" class="btn btn-primary btn-sm">
+                      <span>Traiter</span>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         3 & 4. BLOCS EN 2 COLONNES : ANNONCES PAR STATUT & DERNIÈRES INSCRIPTIONS
+         ==================================================================== -->
+    <div class="grille-deux-colonnes">
+      <!-- 3. Bloc 'Annonces par statut' avec barres horizontales CSS -->
+      <div class="card bloc-graphique">
+        <div class="entete-bloc">
+          <span class="tag-label">RÉPARTITION</span>
+          <h3 class="titre-bloc">Annonces par statut</h3>
+        </div>
+
+        <div class="liste-barres-statut">
+          <div *ngFor="let stat of statsAnnonces" class="ligne-barre">
+            <div class="infos-barre">
+              <span class="nom-statut">{{ stat.libelle }}</span>
+              <span class="chiffre-statut tabular-nums">
+                <strong>{{ stat.count }}</strong> ({{ stat.pourcentage }}%)
+              </span>
+            </div>
+            <div class="conteneur-barre">
+              <div
+                class="barre-remplissage"
+                [ngClass]="stat.couleurClass"
+                [style.width.%]="stat.pourcentage"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Bloc 'Dernières inscriptions' (8 derniers utilisateurs) -->
+      <div class="card bloc-inscriptions">
+        <div class="entete-bloc">
+          <div class="titre-avec-badge">
+            <span class="tag-label">COMMUNAUTÉ</span>
+            <h3 class="titre-bloc">Dernières inscriptions</h3>
+          </div>
+          <a routerLink="/admin/utilisateurs" class="lien-voir-tout">Voir tous →</a>
+        </div>
+
+        <div *ngIf="dernieresInscriptions.length === 0" class="etat-vide-compact">
+          <span>Aucun utilisateur inscrit pour l'instant.</span>
+        </div>
+
+        <div *ngIf="dernieresInscriptions.length > 0" class="liste-utilisateurs-recents">
+          <div *ngFor="let u of dernieresInscriptions" class="ligne-utilisateur">
+            <app-avatar [nom]="u.nom" [photoUrl]="u.photo" [role]="u.role" [taille]="36"></app-avatar>
+            <div class="info-user-recents">
+              <div class="nom-et-role">
+                <strong class="nom-user">{{ u.nom }}</strong>
+                <span class="badge badge-neutral badge-role">{{ u.role }}</span>
+              </div>
+              <small class="email-user">{{ u.email }}</small>
+            </div>
+            <div class="statut-et-date">
+              <app-status-badge [statut]="u.statutVerification"></app-status-badge>
+              <span class="date-user">{{ formaterDate(u.dateInscription) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

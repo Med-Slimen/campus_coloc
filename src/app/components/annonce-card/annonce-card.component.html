@@ -1,0 +1,65 @@
+<a [routerLink]="['/annonces', annonce.id]" class="card card-interactive carte-annonce">
+  <!-- Visuel principal / première photo -->
+  <div class="visuel-conteneur">
+    <img
+      *ngIf="premierePhoto"
+      [src]="premierePhoto"
+      [alt]="annonce.titre"
+      class="visuel-image"
+      loading="lazy"
+    />
+    <div *ngIf="!premierePhoto" class="visuel-vide">
+      <app-icon name="camera" [size]="32"></app-icon>
+      <span class="texte-sans-photo">Aucune photo</span>
+    </div>
+
+    <!-- Badge soleil 'Colocation ouverte' si un espace public et ouvert est actif -->
+    <div class="badge-flottant-coloc" *ngIf="espacePublicOuvert">
+      <span class="badge badge-sun">Colocation ouverte</span>
+    </div>
+
+    <!-- Bouton cœur favoris (étudiants uniquement) -->
+    <button
+      *ngIf="estEtudiant"
+      type="button"
+      class="bouton-coeur-favori"
+      [class.actif]="estFavori"
+      (click)="basculerFavori($event)"
+      [attr.aria-label]="estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+      [title]="estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+    >
+      <app-icon name="heart" [size]="16"></app-icon>
+    </button>
+  </div>
+
+  <!-- Corps de la carte -->
+  <div class="corps-carte">
+    <!-- Ville et quartier sous forme de petits tags majuscules -->
+    <div class="tags-localisation">
+      <span class="tag-label tag-ville">{{ annonce.ville | uppercase }}</span>
+      <span class="tag-separateur" *ngIf="annonce.quartier">•</span>
+      <span class="tag-label tag-quartier" *ngIf="annonce.quartier">{{ annonce.quartier | uppercase }}</span>
+    </div>
+
+    <!-- Titre de l'annonce -->
+    <h3 class="titre-annonce">{{ annonce.titre }}</h3>
+
+    <!-- Caractéristiques : Loyer, charges et places -->
+    <div class="specs-ligne">
+      <span class="loyer-detail">
+        Loyer : <strong class="prix">{{ annonce.loyer }} DT</strong>
+        <span *ngIf="annonce.charges" class="charges-detail"> (+{{ annonce.charges }} DT charges)</span>
+      </span>
+      <span class="places-detail">
+        <app-icon name="users" [size]="14"></app-icon>
+        <span>{{ annonce.nombrePlaces }} place{{ annonce.nombrePlaces > 1 ? 's' : '' }}</span>
+      </span>
+    </div>
+
+    <!-- Ligne proéminente : 'Budget par personne: X DT / mois' -->
+    <div class="ligne-budget-proeminente">
+      <span class="libelle-budget">Budget par personne :</span>
+      <span class="valeur-budget prix">{{ budgetParPersonne }} DT <small>/ mois</small></span>
+    </div>
+  </div>
+</a>

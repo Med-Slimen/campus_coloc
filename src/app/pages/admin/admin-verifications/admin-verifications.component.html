@@ -1,0 +1,167 @@
+<div class="page-verifications">
+  <!-- En-tête de section -->
+  <div class="en-tete-page">
+    <div>
+      <span class="tag-label">MODÉRATION D'IDENTITÉ</span>
+      <h2 class="titre-page">Vérifications en attente</h2>
+      <p class="desc-page">Contrôlez les pièces d'identité avant de certifier les profils étudiants et propriétaires.</p>
+    </div>
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      (click)="chargerVerifications()"
+      [disabled]="chargement"
+    >
+      <app-icon name="rotate" [size]="14"></app-icon>
+      <span>Actualiser</span>
+    </button>
+  </div>
+
+  <!-- État de chargement -->
+  <app-loader *ngIf="chargement" type="table" [count]="5"></app-loader>
+
+  <!-- État d'erreur -->
+  <app-error-message
+    *ngIf="erreur && !chargement"
+    [message]="erreur"
+    (reessayer)="chargerVerifications()"
+  ></app-error-message>
+
+  <!-- État vide -->
+  <app-empty-state
+    *ngIf="!chargement && !erreur && verifications.length === 0"
+    titre="Toutes les vérifications sont traitées"
+    description="Aucune pièce d'identité n'est en attente d'examen pour le moment."
+    icone="shield-check"
+  ></app-empty-state>
+
+  <!-- Tableau des vérifications en attente -->
+  <div *ngIf="!chargement && !erreur && verifications.length > 0" class="card tableau-carte">
+    <div class="table-responsive">
+      <table class="table-verifs">
+        <thead>
+          <tr>
+            <th>UTILISATEUR</th>
+            <th>RÔLE</th>
+            <th>DOCUMENT</th>
+            <th>DATE DE DÉPÔT</th>
+            <th>STATUT</th>
+            <th class="col-action">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let v of verifications">
+            <td>
+              <div class="cellule-user">
+                <app-avatar [nom]="v.userNom" [role]="v.userRole === 'proprietaire' ? 'proprietaire' : 'etudiant'" [taille]="34"></app-avatar>
+                <div>
+                  <strong class="nom-user">{{ v.userNom }}</strong>
+                  <small class="email-user">{{ v.userEmail }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-neutral">{{ v.userRole | uppercase }}</span>
+            </td>
+            <td>
+              <span class="badge badge-sun">
+                {{ v.type === 'carte_etudiante' ? 'Carte étudiante' : 'CIN' }}
+              </span>
+            </td>
+            <td>
+              <span class="date-depot">{{ formaterDate(v.dateDepot) }}</span>
+            </td>
+            <td>
+              <app-status-badge [statut]="v.statut"></app-status-badge>
+            </td>
+            <td class="col-action">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm btn-voir"
+                (click)="ouvrirExamen(v)"
+              >
+                <app-icon name="eye" [size]="14"></app-icon>
+                <span>Voir</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       PANNEAU MODAL DE MODÉRATION DU DOCUMENT
+       ==================================================================== -->
+  <div *ngIf="verifSelectionnee" class="modal-overlay" (click)="fermerExamen()">
+    <div class="card modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-entete">
+        <div>
+          <span class="tag-label">EXAMEN DE JUSTIFICATIF</span>
+          <h3 class="modal-titre">{{ verifSelectionnee.userNom }}</h3>
+          <span class="modal-sous-titre">
+            {{ verifSelectionnee.type === 'carte_etudiante' ? 'Carte étudiante' : 'Carte d’Identité Nationale' }}
+            • Déposé le {{ formaterDate(verifSelectionnee.dateDepot) }}
+          </span>
+        </div>
+        <button type="button" class="btn-fermer-modal" (click)="fermerExamen()" aria-label="Fermer">
+          <app-icon name="close" [size]="20"></app-icon>
+        </button>
+      </div>
+
+      <div class="modal-corps">
+        <!-- Image de la pièce justificative -->
+        <div class="cadre-image-document">
+          <img
+            [src]="verifSelectionnee.fichier"
+            [alt]="'Justificatif de ' + verifSelectionnee.userNom"
+            class="image-document-modal"
+          />
+        </div>
+
+        <!-- Section des actions d'approbation et de refus -->
+        <div class="actions-moderation">
+          <!-- Option A : Approuver -->
+          <div class="bloc-action-approuver">
+            <button
+              type="button"
+              class="btn btn-primary w-full btn-action-valider"
+              (click)="approuverPiece()"
+              [disabled]="actionEnCours"
+            >
+              <app-icon name="check" [size]="18"></app-icon>
+              <span>{{ actionEnCours ? 'Traitement...' : 'Approuver et certifier le profil' }}</span>
+            </button>
+          </div>
+
+          <!-- Option B : Refuser avec motif obligatoire -->
+          <div class="bloc-action-refuser">
+            <label for="motifInput">MOTIF DU REFUS (OBLIGATOIRE EN CAS DE REFUS)</label>
+            <textarea
+              id="motifInput"
+              rows="3"
+              [(ngModel)]="motifRefus"
+              placeholder="Ex. Photo floue, document tronqué, nom ne correspondant pas au profil..."
+              class="textarea-motif"
+            ></textarea>
+
+            <div *ngIf="erreurMotif" class="field-error">
+              <app-icon name="alert" [size]="14"></app-icon>
+              <span>{{ erreurMotif }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-danger w-full btn-action-refuser"
+              (click)="refuserPiece()"
+              [disabled]="actionEnCours"
+            >
+              <app-icon name="close" [size]="16"></app-icon>
+              <span>{{ actionEnCours ? 'Traitement...' : 'Refuser avec ce motif' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

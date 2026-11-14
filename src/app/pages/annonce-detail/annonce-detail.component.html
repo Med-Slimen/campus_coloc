@@ -1,0 +1,393 @@
+<div class="container page-detail">
+  <!-- Bouton de retour vers la liste -->
+  <div class="navigation-retour">
+    <a routerLink="/annonces" class="btn btn-ghost btn-sm lien-retour">
+      <app-icon name="arrow-left" [size]="16"></app-icon>
+      <span>Retour aux annonces</span>
+    </a>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-chargement">
+    <app-loader type="card" [count]="1"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && (erreur || !annonce)" class="zone-erreur">
+    <app-error-message
+      [message]="erreur || 'Logement introuvable.'"
+      (reessayer)="chargerAnnonce(annonceId)"
+    ></app-error-message>
+  </div>
+
+  <!-- Contenu détaillé du logement -->
+  <div *ngIf="!chargement && annonce" class="grille-detail">
+    <!-- Colonne principale : Galerie photos et descriptif -->
+    <div class="colonne-principale">
+      <!-- 1. Galerie photos interactive -->
+      <section class="card galerie-photos">
+        <!-- Photo principale agrandie -->
+        <div class="cadre-photo-principale">
+          <img
+            *ngIf="photoPrincipaleSelectionnee"
+            [src]="photoPrincipaleSelectionnee"
+            [alt]="annonce.titre"
+            class="photo-principale"
+          />
+          <div *ngIf="!photoPrincipaleSelectionnee" class="photo-vide">
+            <app-icon name="camera" [size]="48"></app-icon>
+            <span>Aucune photo disponible pour ce logement</span>
+          </div>
+
+          <!-- Tag soleil 'Colocation ouverte' si applicable -->
+          <div class="badge-flottant-espace" *ngIf="espacePublicOuvert">
+            <span class="badge badge-sun">Colocation ouverte</span>
+          </div>
+
+          <!-- Bouton bascule cœur favoris (étudiants uniquement) -->
+          <button
+            *ngIf="estEtudiant"
+            type="button"
+            class="bouton-coeur-photo"
+            [class.actif]="estEnFavoris"
+            (click)="actionFavoris()"
+            [attr.aria-label]="estEnFavoris ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            [title]="estEnFavoris ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+          >
+            <app-icon name="heart" [size]="20"></app-icon>
+          </button>
+        </div>
+
+        <!-- Rangée de vignettes miniatures cliquables -->
+        <div class="vignettes-rang" *ngIf="annonce.photos && annonce.photos.length > 1">
+          <button
+            *ngFor="let p of annonce.photos; let i = index"
+            type="button"
+            class="bouton-vignette"
+            [class.active]="p === photoPrincipaleSelectionnee"
+            (click)="selectionnerPhoto(p)"
+            [title]="'Afficher la photo ' + (i + 1)"
+          >
+            <img [src]="p" [alt]="'Miniature ' + (i + 1)" class="img-vignette" />
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. Fiche descriptive complète -->
+      <article class="card fiche-description">
+        <header class="entete-fiche">
+          <div class="tags-localisation">
+            <span class="tag-label tag-ville">{{ annonce.ville | uppercase }}</span>
+            <span class="tag-separateur" *ngIf="annonce.quartier">•</span>
+            <span class="tag-label tag-quartier" *ngIf="annonce.quartier">{{ annonce.quartier | uppercase }}</span>
+          </div>
+          <h1 class="titre-fiche">{{ annonce.titre }}</h1>
+
+          <div class="caracteristiques-badges">
+            <span class="badge badge-neutral">
+              <app-icon name="users" [size]="14"></app-icon>
+              {{ annonce.nombrePlaces }} place{{ annonce.nombrePlaces > 1 ? 's' : '' }}
+            </span>
+            <span class="badge badge-neutral">
+              {{ annonce.meuble ? 'Logement meublé' : 'Non meublé' }}
+            </span>
+            <span class="badge badge-neutral" *ngIf="annonce.dureeLocation">
+              <app-icon name="calendar" [size]="14"></app-icon>
+              {{ annonce.dureeLocation }}
+            </span>
+          </div>
+        </header>
+
+        <div class="separateur-ligne"></div>
+
+        <!-- Texte de description -->
+        <section class="section-texte">
+          <h2 class="sous-titre-fiche">Description du logement</h2>
+          <p class="texte-paragraphe">{{ annonce.description }}</p>
+        </section>
+
+        <div class="separateur-ligne"></div>
+
+        <!-- Détails et caractéristiques techniques -->
+        <section class="section-specs">
+          <h2 class="sous-titre-fiche">Modalités de la colocation</h2>
+          <div class="grille-specs">
+            <div class="spec-bloc">
+              <span class="tag-label">LOYER GLOBAL</span>
+              <div class="spec-valeur prix">{{ annonce.loyer }} DT <small>/ mois</small></div>
+            </div>
+            <div class="spec-bloc">
+              <span class="tag-label">CHARGES ESTIMÉES</span>
+              <div class="spec-valeur">
+                {{ annonce.charges ? (annonce.charges + ' DT / mois') : 'Incluses' }}
+              </div>
+            </div>
+            <div class="spec-bloc">
+              <span class="tag-label">CAPACITÉ DU LOGEMENT</span>
+              <div class="spec-valeur">{{ annonce.nombrePlaces }} colocataire{{ annonce.nombrePlaces > 1 ? 's' : '' }}</div>
+            </div>
+            <div class="spec-bloc">
+              <span class="tag-label">DURÉE SOUHAITÉE</span>
+              <div class="spec-valeur">{{ annonce.dureeLocation || 'Flexible' }}</div>
+            </div>
+          </div>
+        </section>
+      </article>
+    </div>
+
+    <!-- Colonne latérale : Calcul du budget, informations de l'hôte et actions -->
+    <aside class="colonne-laterale">
+      <!-- 1. Carte financière du budget par personne -->
+      <div class="card carte-finances">
+        <span class="tag-label">BUDGET ESTIMÉ PAR PERSONNE</span>
+        <div class="prix-personne-bloc">
+          <span class="montant-grand prix">{{ budgetParPersonne }} DT</span>
+          <span class="frequence-loyer">/ colocataire / mois</span>
+        </div>
+        <p class="detail-calcul">
+          Calculé à partir du loyer total de <strong>{{ annonce.loyer }} DT</strong>
+          <span *ngIf="annonce.charges"> et de <strong>{{ annonce.charges }} DT</strong> de charges estimées</span>,
+          partagés équitablement entre les <strong>{{ annonce.nombrePlaces }} colocataires</strong>.
+        </p>
+
+        <div class="separateur-ligne"></div>
+
+        <!-- Actions disponibles pour les étudiants (visiteurs renvoyés vers /connexion) -->
+        <div class="bloc-actions-etudiant" *ngIf="!estConnecte || estEtudiant">
+          <!-- Alerte explicative si blocage -->
+          <div *ngIf="raisonBlocage" class="alerte-blocage-demande">
+            <app-icon name="alert" [size]="16"></app-icon>
+            <span>{{ raisonBlocage }}</span>
+          </div>
+
+          <!-- Encart Colocation Ouverte (si l'espace est public et ouvert - Règle 4) -->
+          <div *ngIf="espacePublicOuvert" class="encart-colocation-ouverte">
+            <div class="entete-coloc-ouverte">
+              <span class="badge badge-sun">Colocation ouverte</span>
+            </div>
+            <p class="desc-coloc-ouverte">
+              Cette colocation dispose d'un espace actif ouvert aux candidatures. Rejoignez l'équipe de colocataires !
+            </p>
+          </div>
+
+          <!-- Si une demande initiale existe déjà -->
+          <div *ngIf="demandeExistante" class="encart-demande-existante">
+            <div class="ligne-statut-existante">
+              <span class="tag-label">VOTRE DEMANDE :</span>
+              <app-status-badge [statut]="demandeExistante.statut"></app-status-badge>
+            </div>
+            <p class="desc-existante">
+              Demande envoyée le {{ demandeExistante.dateEnvoi | date:'dd/MM/yyyy' }}.
+            </p>
+            <a routerLink="/demandes" class="btn btn-secondary btn-sm w-full">
+              Consulter dans Mes demandes →
+            </a>
+          </div>
+
+          <!-- Si l'étudiant a demandé à rejoindre l'espace ouvert -->
+          <div *ngIf="aDemandeAdhesion" class="alerte-demande-transmise">
+            <app-icon name="check" [size]="16"></app-icon>
+            <span>Votre demande pour rejoindre cette colocation a été transmise au premier locataire.</span>
+          </div>
+
+          <!-- Bouton principal : Je suis intéressé OU Demander à rejoindre -->
+          <button
+            *ngIf="!demandeExistante && !aDemandeAdhesion"
+            type="button"
+            class="btn btn-primary w-full bouton-action-principale"
+            (click)="actionInteresse()"
+          >
+            <app-icon [name]="hasEspace ? 'users' : 'chat'" [size]="18"></app-icon>
+            <span>{{ hasEspace ? 'Demander à rejoindre' : 'Je suis intéressé' }}</span>
+          </button>
+
+          <!-- Bouton secondaire : Ajouter / Retirer des favoris -->
+          <button
+            type="button"
+            class="btn btn-secondary w-full bouton-favori-action"
+            [class.favori-actif]="estEnFavoris"
+            (click)="actionFavoris()"
+          >
+            <app-icon name="heart" [size]="16"></app-icon>
+            <span>{{ estEnFavoris ? 'Retirer des favoris' : 'Ajouter aux favoris' }}</span>
+          </button>
+
+          <!-- Bouton fantôme : Signaler l'annonce -->
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-signaler w-full"
+            (click)="actionSignaler()"
+          >
+            <app-icon name="flag" [size]="14"></app-icon>
+            <span>Signaler ce logement</span>
+          </button>
+
+          <p *ngIf="!estConnecte" class="note-connexion-requise">
+            Connexion requise pour manifester votre intérêt ou sauvegarder l'offre.
+          </p>
+        </div>
+
+        <!-- Note si connecté en tant que propriétaire ou admin -->
+        <div class="bloc-info-bailleur" *ngIf="estConnecte && !estEtudiant">
+          <p class="texte-info-bailleur">
+            Vous visualisez cette annonce avec votre compte <strong>{{ authService.currentUser?.role }}</strong>.
+            Les candidatures et favoris sont réservés aux comptes étudiants.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. Encadré de l'hôte propriétaire (PRÉNOM UNIQUEMENT, AUCUN TÉLÉPHONE NI EMAIL) -->
+      <div class="card encadre-hote">
+        <span class="tag-label">PROPRIÉTAIRE DU LOGEMENT</span>
+
+        <div class="hote-profil-ligne">
+          <app-avatar
+            [nom]="proprietairePrenom"
+            [photoUrl]="proprietairePhoto"
+            [taille]="48"
+            role="proprietaire"
+          ></app-avatar>
+
+          <div class="hote-infos">
+            <h3 class="hote-prenom">{{ proprietairePrenom }}</h3>
+            <!-- Badge 'Hôte vérifié' si le propriétaire a certifié sa pièce d'identité -->
+            <span class="badge badge-ok badge-hote-verifie" *ngIf="hoteVerifie">
+              <app-icon name="shield-check" [size]="14"></app-icon>
+              <span>Hôte vérifié</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="confidentialite-notice">
+          <app-icon name="shield-check" [size]="16"></app-icon>
+          <p>
+            Par mesure de sécurité et pour éviter tout démarchage, le numéro de téléphone et le courriel de l'hôte ne sont jamais affichés publiquement. Ils vous sont transmis automatiquement dans l'espace colocation dès l'acceptation de votre dossier.
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MODALE : MANIFESTER MON INTÉRÊT (Message optionnel) -->
+  <div *ngIf="dialogInteresseOuvert" class="modale-superposition" (click)="fermerDialogInteresse()">
+    <div class="modale-boite card" (click)="$event.stopPropagation()">
+      <div class="modale-entete">
+        <div class="icone-modale-interet">
+          <app-icon name="chat" [size]="22"></app-icon>
+        </div>
+        <div>
+          <h3 class="modale-titre">Manifester votre intérêt</h3>
+          <p class="modale-sous-titre">Logement : « {{ annonce?.titre }} »</p>
+        </div>
+      </div>
+
+      <div class="modale-corps">
+        <label for="messageDemandeInput" class="label-message">
+          Message pour le propriétaire (optionnel)
+        </label>
+        <p class="aide-message-modale">
+          Présentez-vous brièvement (vos études, votre année, vos habitudes, votre date d'arrivée souhaitée...).
+        </p>
+
+        <textarea
+          id="messageDemandeInput"
+          [(ngModel)]="messageDemande"
+          rows="4"
+          placeholder="Ex : Bonjour, je suis étudiant en 2ème année à l'INSAT, calme et sérieux. Votre logement correspond parfaitement à mes attentes."
+          class="textarea-demande"
+        ></textarea>
+
+        <div class="info-profil-transmis">
+          <app-icon name="shield-check" [size]="16"></app-icon>
+          <span>Votre nom et votre statut de vérification universitaire seront transmis au propriétaire.</span>
+        </div>
+      </div>
+
+      <div class="modale-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="fermerDialogInteresse()"
+          [disabled]="envoiDemandeEnCours"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="confirmerEnvoiDemande()"
+          [disabled]="envoiDemandeEnCours"
+        >
+          <app-icon name="check" [size]="16"></app-icon>
+          <span>{{ envoiDemandeEnCours ? 'Envoi en cours...' : 'Envoyer ma demande' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale : Signaler un logement -->
+  <div
+    *ngIf="dialogSignalerOuvert"
+    class="fond-modale"
+    (click)="fermerDialogSignaler()"
+  >
+    <div
+      class="carte-modale card"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-labelledby="titreModaleSignaler"
+    >
+      <div class="modale-entete">
+        <div class="icone-modale-ronde icone-danger">
+          <app-icon name="flag" [size]="20"></app-icon>
+        </div>
+        <div>
+          <h3 id="titreModaleSignaler" class="modale-titre">Signaler cette annonce</h3>
+          <p class="modale-sous-titre">Logement : « {{ annonce?.titre }} »</p>
+        </div>
+      </div>
+
+      <div class="modale-corps">
+        <label for="motifSignalementInput" class="label-message">
+          Motif du signalement <span class="champ-obligatoire">*</span>
+        </label>
+        <p class="aide-message-modale">
+          Précisez le problème constaté (annonce frauduleuse, loyer ou photos non conformes, logement déjà loué, comportement inapproprié...).
+        </p>
+
+        <textarea
+          id="motifSignalementInput"
+          [(ngModel)]="motifSignalement"
+          rows="4"
+          placeholder="Décrivez avec précision la raison de votre signalement..."
+          class="textarea-demande"
+          [class.input-erreur]="erreurMotifSignalement"
+        ></textarea>
+
+        <p *ngIf="erreurMotifSignalement" class="message-erreur-champ">
+          {{ erreurMotifSignalement }}
+        </p>
+      </div>
+
+      <div class="modale-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="fermerDialogSignaler()"
+          [disabled]="envoiSignalementEnCours"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmerSignalement()"
+          [disabled]="envoiSignalementEnCours"
+        >
+          <app-icon name="flag" [size]="16"></app-icon>
+          <span>{{ envoiSignalementEnCours ? 'Envoi en cours...' : 'Transmettre le signalement' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,13 @@
+:host {
+  display: inline-flex;
+}
+
+.pastille {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  display: inline-block;
+  opacity: 0.85;
+}
+

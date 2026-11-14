@@ -1,0 +1,254 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // FONCTIONS D'AIDE (HELPERS)
+    // =========================================================================
+
+    // 1. Vérifie si la requête émane d'un utilisateur authentifié
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 2. Vérifie si l'utilisateur connecté est le propriétaire de la donnée ciblée
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 3. Récupère les données du document profil de l'utilisateur connecté dans users/{uid}
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // 4. Vérifie si l'utilisateur connecté possède le rôle 'admin'
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'admin';
+    }
+
+    // 5. Vérifie si l'utilisateur connecté est un étudiant avec un profil vérifié
+    function isVerifiedStudent() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'etudiant' &&
+        getUserData().statutVerification == 'verifie';
+    }
+
+    // 6. Vérifie si l'utilisateur connecté est propriétaire de l'espace de colocation rattaché à une annonce
+    function isEspaceOwner(annonceId) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/espaces/$(annonceId)) &&
+         get(/databases/$(database)/documents/espaces/$(annonceId)).data.proprietaireId == request.auth.uid) ||
+        isAdmin()
+      );
+    }
+
+    // 7. Vérifie si l'utilisateur connecté est un membre accepté de l'espace ou le propriétaire
+    function isAcceptedMembre(annonceId) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/espaces/$(annonceId)).data.statutAdhesion == 'accepte') ||
+        isEspaceOwner(annonceId) ||
+        isAdmin()
+      );
+    }
+
+    // 8. Vérifie si l'utilisateur connecté est le premier locataire de l'espace
+    function isPremierLocataire(annonceId) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/espaces/$(annonceId)/membres/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/espaces/$(annonceId)).data.premierLocataire == true) ||
+        isAdmin()
+      );
+    }
+
+    // =========================================================================
+    // 1. UTILISATEURS (users/{userId})
+    // =========================================================================
+    // - Firestore ne permettant pas de restreindre la lecture à certains champs précis
+    //   d'un document (projection côté serveur non configurable via les règles de sécurité),
+    //   la lecture des profils est autorisée à tout utilisateur authentifié. Cela permet
+    //   d'afficher le nom, l'avatar, la filière et la faculté sur les annonces, demandes et espaces.
+    // - Un utilisateur peut créer et modifier son propre profil sans altérer son rôle ni son statut de vérification.
+    // - L'administrateur dispose d'un accès total en lecture et écriture.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Création lors de l'inscription : rôle restreint à 'etudiant' ou 'proprietaire', statut initial 'non_verifie'
+      allow create: if isOwner(userId) &&
+        request.resource.data.role in ['etudiant', 'proprietaire'] &&
+        request.resource.data.statutVerification == 'non_verifie' ||
+        isAdmin();
+
+      // Mise à jour : l'utilisateur ne peut modifier ni son rôle ni son statutVerification
+      allow update: if isOwner(userId) &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.statutVerification == resource.data.statutVerification ||
+        isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 2. PIÈCES JUSTIFICATIVES DE VÉRIFICATION (verifications/{verificationId})
+    // =========================================================================
+    // - L'auteur téléverse son justificatif (statut initial 'en_attente') et consulte uniquement son propre dossier.
+    // - Seul l'administrateur peut lister toutes les pièces et mettre à jour leur statut d'approbation ou de refus.
+    match /verifications/{verificationId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.statut == 'en_attente';
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 3. ANNONCES DE LOGEMENT (annonces/{annonceId})
+    // =========================================================================
+    // - Tout visiteur (connecté ou non) peut lire les annonces validées et publiées.
+    // - Le propriétaire peut lire, créer et modifier ses annonces, mais ne peut JAMAIS
+    //   définir lui-même le statut sur 'publiee' (qui requiert la validation administrative).
+    // - L'administrateur peut tout lire, créer, valider, suspendre ou supprimer.
+    match /annonces/{annonceId} {
+      allow read: if resource.data.statut == 'publiee' ||
+        (isSignedIn() && (request.auth.uid == resource.data.proprietaireId || isAdmin()));
+
+      allow create: if isSignedIn() && (
+        (request.resource.data.proprietaireId == request.auth.uid && request.resource.data.statut == 'en_attente') ||
+        isAdmin()
+      );
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == resource.data.proprietaireId && request.resource.data.statut != 'publiee') ||
+        isAdmin()
+      );
+
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.proprietaireId || isAdmin());
+    }
+
+    // =========================================================================
+    // 4. CANDIDATURES ET DEMANDES DE COLOCATION (demandes/{demandeId})
+    // =========================================================================
+    // - Créée obligatoirement par un étudiant vérifié pour son propre compte (statut initial 'en_attente').
+    // - Consultable par l'étudiant candidat et par le propriétaire du logement concerné.
+    // - L'étudiant ne peut que changer le statut en 'annulee'.
+    // - Le propriétaire peut changer le statut en 'acceptee' ou 'refusee'.
+    match /demandes/{demandeId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.etudiantId ||
+        request.auth.uid == resource.data.proprietaireId ||
+        isAdmin()
+      );
+
+      allow create: if isVerifiedStudent() &&
+        request.resource.data.etudiantId == request.auth.uid &&
+        request.resource.data.statut == 'en_attente';
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == resource.data.etudiantId && request.resource.data.statut == 'annulee') ||
+        (request.auth.uid == resource.data.proprietaireId && request.resource.data.statut in ['acceptee', 'refusee']) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 5. ESPACES DE COLOCATION, MEMBRES ET MESSAGES
+    // =========================================================================
+    // - Consultation réservée au propriétaire du logement et aux membres acceptés.
+    // - Espace public ouvert : consultation autorisée pour lister les logements avec colocation active.
+    match /espaces/{annonceId} {
+      allow read: if (resource.data.visibilite == 'public' && resource.data.statut == 'ouvert') ||
+        isAcceptedMembre(annonceId);
+
+      // Création lors de l'acceptation de la première demande par le propriétaire ou l'administrateur
+      allow create: if isSignedIn() && (request.resource.data.proprietaireId == request.auth.uid || isAdmin());
+
+      // Modification des règles de maison ou de visibilité par le premier locataire ou propriétaire
+      allow update: if isPremierLocataire(annonceId) || isEspaceOwner(annonceId) || isAdmin();
+
+      allow delete: if isAdmin();
+
+      // --- Sous-collection membres ---
+      match /membres/{etudiantId} {
+        // Chaque membre peut lire son statut ; les membres acceptés et le bailleur lisent la liste des colocataires
+        allow read: if isSignedIn() && (request.auth.uid == etudiantId || isAcceptedMembre(annonceId));
+
+        // Inscription ou premier membre créé par le propriétaire, invitation par le 1er locataire, ou demande d'adhésion par un étudiant vérifié
+        allow create: if isSignedIn() && (
+          isEspaceOwner(annonceId) ||
+          (isPremierLocataire(annonceId) && request.resource.data.statutAdhesion == 'invite') ||
+          (isVerifiedStudent() && request.auth.uid == etudiantId && request.resource.data.statutAdhesion == 'demande') ||
+          isAdmin()
+        );
+
+        // Décision du premier locataire sur les candidatures ou réponse de l'invité
+        allow update: if isSignedIn() && (
+          (request.auth.uid == etudiantId && request.resource.data.statutAdhesion in ['accepte', 'refuse']) ||
+          isPremierLocataire(annonceId) ||
+          isAdmin()
+        );
+
+        allow delete: if isSignedIn() && (
+          request.auth.uid == etudiantId ||
+          isPremierLocataire(annonceId) ||
+          isAdmin()
+        );
+      }
+
+      // --- Sous-collection messagerie collective temps réel ---
+      match /messages/{messageId} {
+        allow read: if isAcceptedMembre(annonceId);
+
+        // L'auteur du message doit être un membre accepté ou le propriétaire du logement
+        allow create: if isAcceptedMembre(annonceId) &&
+          request.resource.data.auteurId == request.auth.uid;
+
+        allow update, delete: if isSignedIn() && (
+          request.auth.uid == resource.data.auteurId ||
+          isAdmin()
+        );
+      }
+    }
+
+    // =========================================================================
+    // 6. NOTIFICATIONS INTERNES (notifications/{notificationId})
+    // =========================================================================
+    // - Chaque utilisateur consulte et marque comme lues uniquement ses propres notifications.
+    // - Tout utilisateur connecté peut émettre une notification (ex: envoi de demande, acceptation, invitation).
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+
+      allow create: if isSignedIn();
+
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
+    // =========================================================================
+    // 7. SIGNALEMENTS ET MODÉRATION (signalements/{signalementId})
+    // =========================================================================
+    // - Tout utilisateur authentifié peut signaler une annonce suspecte ou non conforme.
+    // - Seul l'administrateur peut lister, examiner et mettre à jour le statut des signalements.
+    match /signalements/{signalementId} {
+      allow read: if isAdmin();
+
+      allow create: if isSignedIn() &&
+        request.resource.data.auteurId == request.auth.uid &&
+        request.resource.data.statut == 'ouvert';
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+  }
+}

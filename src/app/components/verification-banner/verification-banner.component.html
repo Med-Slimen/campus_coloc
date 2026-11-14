@@ -1,0 +1,24 @@
+<div
+  *ngIf="afficher"
+  class="bandeau-verification"
+  [class.bandeau-attente]="statutVerification === 'en_attente'"
+  [class.bandeau-refuse]="statutVerification === 'refuse'"
+  role="alert"
+>
+  <div class="container contenu-bandeau">
+    <div class="info-gauche">
+      <div class="icone-bouclier">
+        <app-icon name="shield-check" [size]="18"></app-icon>
+      </div>
+      <div>
+        <span class="tag-label statut-titre">STATUT DU COMPTE</span>
+        <p class="texte-bandeau">{{ message }}</p>
+      </div>
+    </div>
+    <div class="action-droite">
+      <a routerLink="/profil" class="btn btn-sm btn-primary">
+        {{ libelleBouton }}
+      </a>
+    </div>
+  </div>
+</div>

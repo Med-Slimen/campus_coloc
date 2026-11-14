@@ -1,0 +1,517 @@
+.page-dashboard {
+  padding-top: 32px;
+  padding-bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* En-tête */
+.en-tete-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--border-soft);
+  padding-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.titres-bloc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titre-principal {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.desc-page {
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  max-width: 650px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.actions-en-tete {
+  flex-shrink: 0;
+}
+
+.zone-etat {
+  padding: 40px 0;
+}
+
+/* Bloc publication bloquée si non vérifié */
+.conteneur-bouton-publier {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.bloc-publication-bloquee {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.btn-desactive {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  background-color: var(--border-soft);
+  color: var(--ink-soft);
+  border-color: var(--border-soft);
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.explication-blocage {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--orange);
+  font-weight: 600;
+}
+
+/* 1. Carte de vérification d'identité */
+.carte-verification-statut {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background-color: var(--card);
+  border: var(--border-main);
+  box-shadow: 3px 3px 0 var(--border-soft);
+}
+
+.carte-verification-statut.statut-verifie {
+  border-left: 5px solid var(--success);
+  background-color: #F6FAF7;
+}
+
+.carte-verification-statut.statut-en_attente {
+  border-left: 5px solid var(--orange);
+  background-color: #FDF9F3;
+}
+
+.carte-verification-statut.statut-non_verifie {
+  border-left: 5px solid var(--blue);
+  background-color: #F4F8FB;
+}
+
+.carte-verification-statut.statut-refuse {
+  border-left: 5px solid var(--danger);
+  background-color: #FDF4F4;
+}
+
+.icone-verif-grand {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  border: var(--border-main);
+  background-color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+
+.statut-verifie .icone-verif-grand {
+  background-color: #E8F4EC;
+  color: var(--success);
+  border-color: rgba(39, 110, 68, 0.4);
+}
+
+.statut-en_attente .icone-verif-grand {
+  background-color: #FAF0E4;
+  color: var(--orange);
+  border-color: rgba(217, 119, 54, 0.4);
+}
+
+.statut-non_verifie .icone-verif-grand {
+  background-color: #EAF0F6;
+  color: var(--blue);
+  border-color: rgba(43, 76, 111, 0.4);
+}
+
+.statut-refuse .icone-verif-grand {
+  background-color: #FAECEC;
+  color: var(--danger);
+  border-color: rgba(197, 48, 48, 0.4);
+}
+
+.contenu-verif-statut {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entete-verif-statut {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.titre-verif {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.texte-verif {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.action-verif {
+  flex-shrink: 0;
+}
+
+/* Bannière demandes reçues */
+.banniere-demandes-recues {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background-color: #F8F6F0;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 2px 2px 0 var(--border-soft);
+  gap: 16px;
+}
+
+.banniere-gauche {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icone-banniere {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background-color: var(--paper);
+  border: var(--border-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.titre-banniere {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 2px 0 0;
+}
+
+.titre-banniere strong {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+/* 2. Grille de statistiques (4 cartes) */
+.grille-statistiques {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.stat-carte {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--border-soft);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.stat-carte:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.stat-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--blue);
+}
+
+.pastille-stat {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.pastille-ok {
+  background-color: var(--success);
+}
+
+.pastille-attente {
+  background-color: var(--orange);
+}
+
+.pastille-alerte {
+  background-color: var(--danger);
+}
+
+.stat-chiffre {
+  font-family: var(--font-heading);
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-desc {
+  font-size: 0.83rem;
+  color: var(--ink-soft);
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.lien-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-top: auto;
+  text-decoration: none;
+  transition: gap 0.12s ease;
+}
+
+.lien-detail:hover {
+  gap: 10px;
+  text-decoration: underline;
+}
+
+.fleche-lien {
+  transition: transform 0.12s ease;
+}
+
+.lien-detail:hover .fleche-lien {
+  transform: translateX(2px);
+}
+
+/* 3. Bloc tableau des dernières annonces */
+.bloc-tableau-annonces {
+  padding: 24px;
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--border-soft);
+}
+
+.entete-tableau {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.titre-bloc {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+
+.lien-voir-tout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.lien-voir-tout:hover {
+  text-decoration: underline;
+}
+
+.etat-vide-annonces {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  background-color: var(--paper);
+  border: 1.5px dashed var(--border-soft);
+  border-radius: var(--radius);
+}
+
+.conteneur-table {
+  overflow-x: auto;
+}
+
+.table-annonces {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.table-annonces th {
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  border-bottom: 2px solid var(--border-soft);
+  background-color: var(--paper);
+}
+
+.table-annonces td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #ECE3D4;
+  vertical-align: middle;
+}
+
+.cellule-logement {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vignette-conteneur {
+  width: 52px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background-color: var(--paper);
+  flex-shrink: 0;
+}
+
+.vignette-annonce {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vignette-vide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+}
+
+.infos-titre {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.titre-ligne {
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.places-ligne {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.cellule-texte {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.quartier-texte {
+  color: var(--ink-soft);
+  margin-left: 4px;
+}
+
+.cellule-loyer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cellule-loyer strong {
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.charges-texte {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.col-actions {
+  text-align: right;
+}
+
+.actions-ligne {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-action-tab {
+  padding: 4px 8px;
+  font-size: 0.82rem;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .grille-statistiques {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .banniere-demandes-recues {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .carte-verification-statut {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-verif {
+    width: 100%;
+  }
+
+  .action-verif .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .grille-statistiques {
+    grid-template-columns: 1fr;
+  }
+}

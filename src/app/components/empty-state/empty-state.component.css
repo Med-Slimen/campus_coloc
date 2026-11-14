@@ -1,0 +1,44 @@
+.empty-state-card {
+  padding: 36px 20px;
+  border: 1.5px dashed var(--ink);
+  border-radius: var(--radius);
+  background-color: var(--card);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.icone-conteneur {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: var(--border-main);
+  background-color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+.empty-titre {
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.empty-description {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  max-width: 440px;
+  margin: 0;
+}
+
+.empty-actions {
+  margin-top: 8px;
+}
+

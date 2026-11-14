@@ -1,0 +1,265 @@
+.page-annonces {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.en-tete-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.titres-groupe {
+  flex: 1;
+  min-width: 260px;
+}
+
+.titre-principal {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--ink);
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.desc-page {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  max-width: 650px;
+}
+
+/* Bouton mobile pour déplier les filtres */
+.bouton-toggle-mobile {
+  display: none;
+  position: relative;
+  align-self: center;
+}
+
+.pastille-active {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--blue);
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+/* Panneau de filtres */
+.panneau-filtres {
+  background-color: var(--card);
+  border: var(--border-main);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-offset-sm);
+}
+
+.entete-filtres {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(23, 32, 42, 0.2);
+}
+
+.titre-filtres-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.titre-filtres {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.btn-reinitialiser {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.btn-reinitialiser:hover {
+  color: var(--danger);
+}
+
+/* Grille des 6 filtres */
+.grille-filtres {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.champ-filtre {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.champ-filtre label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.input-filtre,
+.select-filtre,
+.select-tri {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 12px;
+  border: var(--border-main);
+  border-radius: var(--radius);
+  background-color: #FFFFFF;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-filtre:focus,
+.select-filtre:focus,
+.select-tri:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(29, 78, 158, 0.2);
+}
+
+.champ-avec-unite {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.champ-avec-unite .input-filtre {
+  padding-right: 38px;
+}
+
+.unite-dt {
+  position: absolute;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+/* Pied des filtres */
+.pied-filtres {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(23, 32, 42, 0.2);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.compteur-resultats {
+  font-size: 14px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chiffre-resultats {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.options-tri-groupe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-tri {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.select-tri {
+  width: auto;
+  min-width: 160px;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+/* Zones d'état */
+.zone-etat {
+  margin: 32px 0;
+}
+
+/* Grille des annonces */
+.grille-annonces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* Responsive mobile */
+@media (max-width: 900px) {
+  .grille-filtres {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bouton-toggle-mobile {
+    display: inline-flex;
+  }
+
+  .panneau-filtres {
+    display: none;
+  }
+
+  .panneau-filtres.ouvert-mobile {
+    display: block;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  .grille-filtres {
+    grid-template-columns: 1fr;
+  }
+
+  .pied-filtres {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .options-tri-groupe {
+    justify-content: space-between;
+  }
+
+  .select-tri {
+    flex: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

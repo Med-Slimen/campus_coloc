@@ -1,0 +1,38 @@
+.loader-lignes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.loader-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.image-placeholder {
+  height: 180px;
+  border-radius: 4px;
+}
+
+.carte-corps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-tag {
+  width: 90px;
+  height: 12px;
+}
+
+.loader-grille-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+

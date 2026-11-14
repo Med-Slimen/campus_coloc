@@ -1,0 +1,171 @@
+<div class="page-admin">
+  <!-- En-tête de la page -->
+  <div class="en-tete-page">
+    <div>
+      <span class="tag-label">MODÉRATION DE CONTENU</span>
+      <h2 class="titre-page">Gestion des signalements</h2>
+      <p class="desc-page">Examinez les alertes transmises par les utilisateurs, suspendez les annonces abusives et traitez les signalements.</p>
+    </div>
+
+    <div class="compteur-signalements" *ngIf="!chargement && !erreur">
+      <span class="badge" [ngClass]="ouvertsCount > 0 ? 'badge-warning' : 'badge-neutral'">
+        <strong>{{ ouvertsCount }}</strong> signalement{{ ouvertsCount > 1 ? 's' : '' }} ouvert{{ ouvertsCount > 1 ? 's' : '' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Barre d'onglets de filtrage -->
+  <div class="barre-filtres" *ngIf="!chargement && !erreur && signalements.length > 0">
+    <div class="groupe-onglets">
+      <button
+        type="button"
+        class="onglet-btn"
+        [class.actif]="filtreActif === 'tous'"
+        (click)="changerFiltre('tous')"
+      >
+        <span>Tous</span>
+        <span class="compteur-onglet">{{ totalCount }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-btn"
+        [class.actif]="filtreActif === 'ouvert'"
+        (click)="changerFiltre('ouvert')"
+      >
+        <span>Ouverts</span>
+        <span class="compteur-onglet" [class.alerte]="ouvertsCount > 0">{{ ouvertsCount }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="onglet-btn"
+        [class.actif]="filtreActif === 'traite'"
+        (click)="changerFiltre('traite')"
+      >
+        <span>Traités</span>
+        <span class="compteur-onglet">{{ traitesCount }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  <div *ngIf="chargement" class="zone-etat">
+    <app-loader type="table" [count]="4"></app-loader>
+  </div>
+
+  <!-- État d'erreur -->
+  <div *ngIf="!chargement && erreur" class="zone-etat">
+    <app-error-message [message]="erreur" (reessayer)="chargerSignalements()"></app-error-message>
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!chargement && !erreur && signalementsFiltres.length === 0" class="zone-etat">
+    <app-empty-state
+      [titre]="filtreActif === 'ouvert' ? 'Aucun signalement ouvert' : 'Aucun signalement enregistré'"
+      [description]="filtreActif === 'ouvert' ? 'Toutes les alertes signalées par la communauté ont été traitées.' : 'Les signalements soumis par les membres apparaîtront dans cet espace de contrôle.'"
+      icone="flag"
+      [texteAction]="filtreActif !== 'tous' ? 'Afficher tous les signalements' : ''"
+      (action)="changerFiltre('tous')"
+    ></app-empty-state>
+  </div>
+
+  <!-- Tableau des signalements -->
+  <div *ngIf="!chargement && !erreur && signalementsFiltres.length > 0" class="card tableau-carte">
+    <div class="table-responsive">
+      <table class="table-admin">
+        <thead>
+          <tr>
+            <th>ANNONCE CONCERNÉE</th>
+            <th>MOTIF DU SIGNALEMENT</th>
+            <th>DATE DU SIGNALEMENT</th>
+            <th>STATUT SIGNALEMENT</th>
+            <th class="col-actions">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of signalementsFiltres" [class.ligne-traitee]="s.statut === 'traite'">
+            <!-- Annonce concernée -->
+            <td class="cellule-annonce">
+              <div class="infos-annonce-sig">
+                <strong class="titre-annonce-sig">{{ s.titreAnnonce }}</strong>
+                <div class="meta-annonce-sig">
+                  <span class="ville-sig">{{ s.villeAnnonce }}</span>
+                  <span *ngIf="s.annonce?.statut" class="badge-statut-annonce">
+                    ({{ s.annonce?.statut }})
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Motif -->
+            <td class="cellule-motif">
+              <p class="texte-motif">{{ s.motif }}</p>
+            </td>
+
+            <!-- Date -->
+            <td class="cellule-date">
+              <span>{{ s.dateSignalement | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </td>
+
+            <!-- Statut -->
+            <td>
+              <span
+                class="badge"
+                [ngClass]="s.statut === 'ouvert' ? 'badge-warning' : 'badge-success'"
+              >
+                {{ s.statut === 'ouvert' ? 'OUVERT' : 'TRAITÉ' }}
+              </span>
+            </td>
+
+            <!-- Actions : Voir l'annonce, Suspendre l'annonce, Marquer comme traité -->
+            <td class="col-actions">
+              <div class="actions-boutons">
+                <!-- Action 1 : Voir l'annonce -->
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  (click)="voirAnnonce(s)"
+                  title="Consulter l'annonce"
+                >
+                  <app-icon name="eye" [size]="14"></app-icon>
+                  <span>Voir l'annonce</span>
+                </button>
+
+                <!-- Action 2 : Suspendre l'annonce -->
+                <button
+                  *ngIf="s.annonce && s.annonce.statut !== 'suspendue'"
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="suspendreAnnonce(s)"
+                  [disabled]="actionEnCours"
+                  title="Suspendre immédiatement cette annonce"
+                >
+                  <app-icon name="pause" [size]="14"></app-icon>
+                  <span>Suspendre</span>
+                </button>
+
+                <span *ngIf="s.annonce && s.annonce.statut === 'suspendue'" class="badge-suspendue">
+                  Suspendue
+                </span>
+
+                <!-- Action 3 : Marquer comme traité -->
+                <button
+                  *ngIf="s.statut === 'ouvert'"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  (click)="marquerCommeTraite(s)"
+                  [disabled]="actionEnCours"
+                  title="Clôturer le signalement"
+                >
+                  <app-icon name="check" [size]="14"></app-icon>
+                  <span>Marquer traité</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

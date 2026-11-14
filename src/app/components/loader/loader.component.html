@@ -1,0 +1,51 @@
+<!-- Squelette en lignes simples -->
+<div *ngIf="type === 'lines'" class="loader-lignes">
+  <div *ngFor="let i of elements" class="skeleton skeleton-text" [style.width.%]="85 - (i * 12)"></div>
+</div>
+
+<!-- Squelette de carte unique -->
+<div *ngIf="type === 'card'" class="card loader-carte">
+  <div class="skeleton skeleton-rect image-placeholder"></div>
+  <div class="carte-corps">
+    <div class="skeleton skeleton-text skeleton-tag"></div>
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton skeleton-text"></div>
+    <div class="skeleton skeleton-text skeleton-text-short"></div>
+  </div>
+</div>
+
+<!-- Squelette de grille de cartes -->
+<div *ngIf="type === 'cards'" class="loader-grille-cartes">
+  <div *ngFor="let i of elements" class="card loader-carte">
+    <div class="skeleton skeleton-rect image-placeholder"></div>
+    <div class="carte-corps">
+      <div class="skeleton skeleton-text skeleton-tag"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-text"></div>
+      <div class="skeleton skeleton-text skeleton-text-short"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Squelette de tableau -->
+<div *ngIf="type === 'table'" class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>COLONNE 1</th>
+        <th>COLONNE 2</th>
+        <th>COLONNE 3</th>
+        <th>STATUT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let i of elements">
+        <td><div class="skeleton skeleton-text" style="width: 70%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: 50%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: 60%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: 40px; height: 20px;"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+

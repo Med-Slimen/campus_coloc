@@ -1,0 +1,85 @@
+<div class="page-container">
+  <div class="carte-test">
+    <div class="en-tete-carte">
+      <span class="tag-label">DIAGNOSTIC TECHNIQUE</span>
+      <h1 class="titre">Test de connexion & Données de démonstration</h1>
+      <p class="description">
+        Vérification de l'accès à Firestore et injection automatisée des comptes et annonces de démonstration.
+      </p>
+    </div>
+
+    <!-- État de la connexion auth -->
+    <div class="ligne-statut">
+      <span class="tag-label">STATUT AUTHENTIFICATION</span>
+      <div class="valeur-statut" [class.est-connecte]="estConnecte">
+        <span class="indicateur-rond" [class.actif]="estConnecte"></span>
+        <span>{{ statutConnexion }}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="lancerTest()"
+        [disabled]="chargement || seedEnCours"
+      >
+        <span *ngIf="chargement" class="spinner"></span>
+        <span>{{ chargement ? 'Lecture en cours...' : 'Tester Firestore' }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="injecterDemoData()"
+        [disabled]="chargement || seedEnCours"
+      >
+        <span *ngIf="seedEnCours" class="spinner"></span>
+        <span>{{ seedEnCours ? 'Injection en cours...' : 'Injecter le jeu de démo complet' }}</span>
+      </button>
+    </div>
+
+    <!-- Message de résultat de l'injection -->
+    <div *ngIf="seedMessage" class="bloc-seed" [class.succes]="seedSucces" [class.erreur]="!seedSucces">
+      <div class="tag-label">{{ seedSucces ? 'INJECTION RÉUSSIE' : 'ÉCHEC INJECTION' }}</div>
+      <p>{{ seedMessage }}</p>
+    </div>
+
+    <!-- Chargement en cours -->
+    <div *ngIf="chargement" class="bloc-chargement">
+      <div class="squelette"></div>
+      <p>Interrogation de la collection <code>users</code> (délai limite de 8 secondes)...</p>
+    </div>
+
+    <!-- Message d'erreur test -->
+    <div *ngIf="erreur && !chargement" class="bloc-erreur">
+      <div class="tag-label statut-danger">ERREUR RENCONTRÉE</div>
+      <p class="texte-erreur">{{ erreur }}</p>
+      <button type="button" class="btn btn-reessayer" (click)="lancerTest()">Réessayer</button>
+    </div>
+
+    <!-- Résultat du succès test -->
+    <div *ngIf="nbDocuments !== null && !chargement" class="bloc-succes">
+      <div class="tag-label statut-succes">CONNEXION RÉUSSIE</div>
+      <div class="grille-resultats">
+        <div class="element-resultat">
+          <span class="tag-label">DOCUMENTS LUS</span>
+          <span class="nombre tabular-nums">{{ nbDocuments }}</span>
+        </div>
+        <div class="element-resultat">
+          <span class="tag-label">TEMPS DE RÉPONSE</span>
+          <span class="nombre tabular-nums">{{ tempsMs }} <small>ms</small></span>
+        </div>
+      </div>
+      <p class="note-succes">
+        La base Firestore répond correctement avec le mode <code>experimentalForceLongPolling: true</code>.
+      </p>
+    </div>
+
+    <!-- État initial avant test -->
+    <div *ngIf="!chargement && !erreur && nbDocuments === null && !seedMessage" class="bloc-attente">
+      <p>Cliquez sur l'un des boutons ci-dessus pour tester la connexion ou créer les données types (1 admin, 2 bailleurs, 4 étudiants, 8 annonces, 2 espaces).</p>
+    </div>
+  </div>
+</div>

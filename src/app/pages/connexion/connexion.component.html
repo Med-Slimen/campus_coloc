@@ -1,0 +1,58 @@
+<div class="auth-conteneur">
+  <div class="card auth-carte">
+    <div class="auth-entete">
+      <span class="tag-label">ESPACE SÉCURISÉ</span>
+      <h1 class="auth-titre">Connexion</h1>
+      <p class="auth-description">Accédez à votre espace colocation, vos annonces et vos demandes.</p>
+    </div>
+
+    <form (ngSubmit)="seConnecter()" class="auth-formulaire">
+      <!-- Alerte d'erreur -->
+      <div *ngIf="erreur" class="field-error" role="alert">
+        <app-icon name="alert" [size]="16"></app-icon>
+        <span>{{ erreur }}</span>
+      </div>
+
+      <!-- Adresse email -->
+      <div class="form-group">
+        <label for="email">ADRESSE COURRIEL</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="etudiant@universite.tn"
+          required
+        />
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="mdp">MOT DE PASSE</label>
+        <input
+          type="password"
+          id="mdp"
+          name="mdp"
+          [(ngModel)]="motDePasse"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      <!-- Bouton d'action -->
+      <button
+        type="submit"
+        class="btn btn-primary w-full btn-connexion"
+        [disabled]="chargement"
+      >
+        <app-icon *ngIf="!chargement" name="key" [size]="18"></app-icon>
+        <span>{{ chargement ? 'Vérification en cours...' : 'Se connecter' }}</span>
+      </button>
+    </form>
+
+    <div class="auth-pied">
+      <span>Pas encore inscrit sur CampusColoc ?</span>
+      <a routerLink="/inscription" class="lien-secondaire">Créer un compte</a>
+    </div>
+  </div>
+</div>

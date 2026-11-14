@@ -1,0 +1,252 @@
+.page-verifications {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.en-tete-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 14px;
+}
+
+.titre-page {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.desc-page {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 4px 0 0;
+}
+
+/* ==========================================================================
+   TABLEAU DES VÉRIFICATIONS
+   ========================================================================== */
+.tableau-carte {
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table-verifs {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table-verifs th {
+  background-color: var(--paper);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--ink);
+  color: var(--ink);
+}
+
+.table-verifs td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #ECE3D4;
+  vertical-align: middle;
+}
+
+.table-verifs tr:last-child td {
+  border-bottom: none;
+}
+
+.table-verifs tr:hover td {
+  background-color: #FAF7F0;
+}
+
+.cellule-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nom-user {
+  font-size: 0.92rem;
+  color: var(--ink);
+  display: block;
+}
+
+.email-user {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: block;
+}
+
+.date-depot {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.col-action {
+  text-align: right;
+  width: 90px;
+}
+
+.btn-voir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   MODAL D'EXAMEN DU DOCUMENT
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(23, 32, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal-dialog {
+  max-width: 620px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  background-color: var(--card);
+  border: 1.5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 12px;
+}
+
+.modal-titre {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  margin: 2px 0 0;
+  color: var(--ink);
+}
+
+.modal-sous-titre {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.btn-fermer-modal {
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 4px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.modal-corps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cadre-image-document {
+  background-color: #F8F5EE;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 320px;
+  overflow: hidden;
+}
+
+.image-document-modal {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.actions-moderation {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bloc-action-approuver {
+  border-bottom: 1px solid #ECE3D4;
+  padding-bottom: 16px;
+}
+
+.btn-action-valider {
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.bloc-action-refuser {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bloc-action-refuser label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.textarea-motif {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  resize: vertical;
+}
+
+.textarea-motif:focus {
+  outline: none;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(179, 56, 44, 0.2);
+}
+
+.btn-action-refuser {
+  padding: 10px;
+  font-size: 0.92rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--danger);
+  background-color: #FDF2F2;
+  border: 1px solid var(--danger);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+}
